@@ -1,6 +1,9 @@
 import { registerRootComponent } from 'expo';
+import { StyleSheet } from 'react-native-web';
 
 import App from './App';
+import Navigation from './Navigation';
+registerRootComponent(Navigation);
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
 // It also ensures that whether you load the app in Expo Go or in a native build,
