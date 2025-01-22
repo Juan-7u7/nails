@@ -13,6 +13,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   header: {
     width: screenWidth, // Usa el ancho de la pantalla
     paddingVertical: Platform.OS === 'ios' ? 50 : 30,

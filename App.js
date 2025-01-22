@@ -12,6 +12,39 @@ import AgendarCitas from './paginas/citas';
 
 const Stack = createStackNavigator();
 
+// Componente App principal
+export default function App() {
+  return (
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="AgendarCitas"
+            component={AgendarCitasScreen}
+            options={{ title: 'Agendar Citas' }}
+          />
+          <Stack.Screen
+            name="Cotizar"
+            component={CotizarScreen}
+            options={{ title: 'Cotizar' }}
+          />
+          <Stack.Screen
+            name="Diseños"
+            component={DiseñosScreen}
+            options={{ title: 'Diseños' }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ScrollView>
+  );
+}
+
+
 // Componente HomeScreen separado
 function HomeScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
@@ -55,7 +88,7 @@ function HomeScreen({ navigation }) {
         <Text style={styles.title}>Bienvenido a Nails ✨</Text>
       </LinearGradient>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
       >
@@ -139,14 +172,14 @@ function HomeScreen({ navigation }) {
         </View>
 
         <ModalRegistro visible={isModalVisible} onClose={() => setModalVisible(false)} />
-        </ScrollView>
-        <LinearGradient
-          colors={['transparent', '#333333']}
-          style={styles.footer}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        />
-      
+      </ScrollView>
+      <LinearGradient
+        colors={['transparent', '#333333']}
+        style={styles.footer}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      />
+
 
       <AwesomeAlert
         show={showAlert}
@@ -168,7 +201,7 @@ function HomeScreen({ navigation }) {
 function AgendarCitasScreen() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <AgendarCitas />  
+      <AgendarCitas />
     </View>
   );
 }
@@ -191,32 +224,3 @@ function DiseñosScreen() {
   );
 }
 
-// Componente App principal
-export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen 
-          name="Home" 
-          component={HomeScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="AgendarCitas" 
-          component={AgendarCitasScreen}
-          options={{ title: 'Agendar Citas' }}
-        />
-        <Stack.Screen 
-          name="Cotizar" 
-          component={CotizarScreen}
-          options={{ title: 'Cotizar' }}
-        />
-        <Stack.Screen 
-          name="Diseños" 
-          component={DiseñosScreen}
-          options={{ title: 'Diseños' }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
