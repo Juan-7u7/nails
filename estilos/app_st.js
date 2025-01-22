@@ -7,7 +7,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    
   },
   scrollView: {
     flexGrow: 1,
@@ -15,6 +14,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 0.10, // Añade padding en la parte inferior
   },
   header: {
     width: screenWidth, // Usa el ancho de la pantalla
