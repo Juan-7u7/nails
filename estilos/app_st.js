@@ -4,6 +4,11 @@ const windowWidth = Dimensions.get('window').width;
 const screenWidth = Dimensions.get('window').width;
 
 const styles = StyleSheet.create({
+  title: {
+    fontSize: 24,
+    fontStyle: 'italic', // Aplica cursiva al texto
+    fontWeight: 'bold',  // Puedes agregar negrita también si lo deseas
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -14,7 +19,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 0.10, // Añade padding en la parte inferior
+    paddingBottom: 0.15, // Añade padding en la parte inferior
   },
   header: {
     width: screenWidth, // Usa el ancho de la pantalla

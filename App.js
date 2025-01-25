@@ -9,6 +9,14 @@ import AwesomeAlert from 'react-native-awesome-alerts';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AgendarCitas from './paginas/citas';
+import Cotizar from './paginas/cotizar';
+import Diseños from './paginas/diseños';
+import ComponenteWeb from './componentes/descargar';
+import InstagramLink from './componentes/instagram';
+import WhatsappLink from './componentes/whatsapp';
+import FacebookLink from './componentes/facebook';
+
+
 
 const Stack = createStackNavigator();
 
@@ -78,6 +86,8 @@ function HomeScreen({ navigation }) {
     setShowLoginForm(true);
   };
 
+
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" />
@@ -85,7 +95,7 @@ function HomeScreen({ navigation }) {
         colors={['#333333', 'transparent']}
         style={styles.header}
       >
-        <Text style={styles.title}>Bienvenido a Nails ✨</Text>
+        <Text style={[styles.title,]}>Nails</Text>
       </LinearGradient>
 
       <ScrollView
@@ -168,6 +178,10 @@ function HomeScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             )}
+            <ComponenteWeb />
+            <InstagramLink />
+            <WhatsappLink />
+            <FacebookLink />
           </View>
         </View>
 
@@ -211,7 +225,8 @@ function AgendarCitasScreen() {
 function CotizarScreen() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Pantalla de Cotizar</Text>
+      {/* <Text>Pantalla de Cotizar</Text> */}
+      <Cotizar />
     </View>
   );
 }
@@ -219,7 +234,8 @@ function CotizarScreen() {
 function DiseñosScreen() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Pantalla de Diseños</Text>
+      {/* <Text>Pantalla de Diseños</Text> */}
+      <Diseños />
     </View>
   );
 }

@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   },
   buttonClose: {
     width: '100%',
-    backgroundColor: '#888', // Gris para el botón de cerrar
+    backgroundColor: '#000', // Gris para el botón de cerrar
     paddingVertical: 12,
     borderRadius: 5,
     alignItems: 'center',
