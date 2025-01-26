@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Platform, TouchableOpacity, Linking, StyleSheet } from 'react-native';
+import { View, Text, Platform, TouchableOpacity, Linking, StyleSheet, Alert } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 
 const ComponenteWeb = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -23,10 +24,33 @@ const ComponenteWeb = () => {
     return null; // No renderiza el componente en plataformas que no sean web o si no es móvil
   }
 
-  const handleDownload = () => {
-    // Reemplaza esta URL con el enlace de descarga de tu APK
-    const apkUrl = 'https://tu-enlace-de-apk.com/download';
-    Linking.openURL(apkUrl);
+  const handleDownload = async () => {
+    // Enlace directo de descarga en Dropbox
+    const apkUrl = 'https://www.dropbox.com/scl/fi/pu4rz8h96dvgkdjxhkvim/Nails.apk?rlkey=qj1xfmvqe5jk82fg9xtf5t2g9&st=7upvzjey&dl=1';
+
+    // Verificar si la URL puede ser abierta
+    const supported = await Linking.canOpenURL(apkUrl);
+    if (supported) {
+      try {
+        // Intentamos abrir el enlace de Dropbox directamente (esto puede funcionar en algunos dispositivos móviles)
+        await Linking.openURL(apkUrl);
+      } catch (err) {
+        console.error("Error al intentar abrir el enlace: ", err);
+      }
+    } else {
+      // Si no se puede abrir, se maneja la descarga manualmente
+      try {
+        const downloadResumable = FileSystem.createDownloadResumable(
+          apkUrl,
+          FileSystem.documentDirectory + 'Nails.apk'
+        );
+        const { uri } = await downloadResumable.downloadAsync();
+        Alert.alert("Descarga completada", `El archivo se ha descargado en: ${uri}`);
+      } catch (err) {
+        console.error("Error al intentar descargar el archivo: ", err);
+        Alert.alert("Error", "Hubo un problema al intentar descargar el archivo.");
+      }
+    }
   };
 
   return (

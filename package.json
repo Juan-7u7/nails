@@ -4,14 +4,14 @@
   "main": "index.js",
   "homepage": "https://juan-7u7.github.io/nails/",
   "scripts": {
-  "start": "expo start",
-  "android": "expo start --android",
-  "ios": "expo start --ios",
-  "web": "expo start --web",
-  "build": "expo build:web", 
-  "predeploy": "gh-pages -d dist",
-  "deploy": "gh-pages -d dist"
-},
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build": "expo build:web",
+    "predeploy": "gh-pages -d dist",
+    "deploy": "gh-pages -d dist"
+  },
   "dependencies": {
     "@react-native-community/checkbox": "^0.5.17",
     "@react-native-community/datetimepicker": "^8.2.0",
@@ -21,6 +21,7 @@
     "expo": "^52.0.27",
     "expo-av": "^15.0.2",
     "expo-checkbox": "^4.0.1",
+    "expo-file-system": "^18.0.7",
     "expo-font": "^13.0.3",
     "expo-linear-gradient": "^14.0.2",
     "expo-status-bar": "~2.0.1",
@@ -38,6 +39,7 @@
     "react-native-sweet-alert": "^3.5.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "^0.19.13",
+    "react-native-webview": "^13.13.1",
     "sweetalert2": "^11.15.10"
   },
   "devDependencies": {
