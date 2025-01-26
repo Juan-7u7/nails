@@ -1,93 +1,117 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal, Button } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons'; // Asegúrate de tener instalada esta librería para los íconos
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Modal } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import { FontAwesome } from '@expo/vector-icons';
 
 const ContenedorResponsive = () => {
   const [showButtons, setShowButtons] = useState(false);
-  const [showModal, setShowModal] = useState(false); // Estado para el modal de tipos de uñas
-  const [showNumberModal, setShowNumberModal] = useState(false); // Estado para el modal de números de uña
+  const [showModal, setShowModal] = useState(false);
+  const [showNumberModal, setShowNumberModal] = useState(false);
+  const [selectedNumber, setSelectedNumber] = useState('1');
+  const [selectedNailType, setSelectedNailType] = useState('natural');
 
   const toggleButtons = () => {
     setShowButtons(!showButtons);
   };
 
   const toggleModal = () => {
-    setShowModal(!showModal); // Cambia el estado de visibilidad del modal de tipos de uñas
+    setShowModal(!showModal);
   };
 
   const toggleNumberModal = () => {
-    setShowNumberModal(!showNumberModal); // Cambia el estado de visibilidad del modal de números de uñas
+    setShowNumberModal(!showNumberModal);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Diseño</Text>
-      {/* Botón principal con el símbolo "+" */}
       <TouchableOpacity style={styles.plusButton} onPress={toggleButtons}>
         <FontAwesome name="plus" size={24} color="#333" />
       </TouchableOpacity>
 
-      {/* Botones adicionales que se muestran al hacer clic en el "+" */}
       {showButtons && (
         <View style={styles.extraButtonsContainer}>
-          {/* Botón de la uña que abrirá el modal de tipos de uñas */}
           <TouchableOpacity style={styles.extraButton} onPress={toggleModal}>
             <FontAwesome name="hand-paper-o" size={24} color="#333" />
           </TouchableOpacity>
-          {/* Botón # que abrirá el modal con números de uñas */}
           <TouchableOpacity style={styles.extraButton} onPress={toggleNumberModal}>
             <FontAwesome name="hashtag" size={24} color="#333" />
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Modal de tipos de uñas */}
       <Modal
         visible={showModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={toggleModal} // Cerrar el modal si el usuario presiona el botón de atrás
+        onRequestClose={toggleModal}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Tipos de Uñas</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={() => alert('Seleccionaste Uña 1')}>
-              <Text style={styles.modalButtonText}>Uña Natural</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton} onPress={() => alert('Seleccionaste Uña 2')}>
-              <Text style={styles.modalButtonText}>Uña Redonda</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton} onPress={() => alert('Seleccionaste Uña 3')}>
-              <Text style={styles.modalButtonText}>Uña Ovalada</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-              <Text style={styles.closeButtonText}>Cerrar</Text>
+            <Picker
+              selectedValue={selectedNailType}
+              onValueChange={(itemValue) => setSelectedNailType(itemValue)}
+              style={styles.picker}
+            >
+              <Picker.Item label="Uña Natural" value="natural" />
+              <Picker.Item label="Uña Redonda" value="round" />
+              <Picker.Item label="Uña Ovalada" value="oval" />
+              <Picker.Item label="Uña Cuadrada" value="cuadrada" />
+              <Picker.Item label="Uña Squoval" value="squoval" />
+              <Picker.Item label="Uña Almendrada" value="almendrada" />
+              <Picker.Item label="Uña Pintalabios" value="pintalabios" />
+              <Picker.Item label="Uña Abanico" value="abanico" />
+              <Picker.Item label="Uña Pico de montaña" value="pico de montaña" />
+              <Picker.Item label="Uña Stiletto" value="stiletto" />
+              <Picker.Item label="Uña Bailarina" value="bailarina" />
+              <Picker.Item label="Uña Punta de flecha" value="flecha" />
+            </Picker>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => {
+                alert(`Seleccionaste ${selectedNailType === 'natural' ? 'Uña Natural' : 
+                       selectedNailType === 'round' ? 'Uña Redonda' : 'Uña Ovalada'}`);
+                toggleModal();
+              }}
+            >
+              <Text style={styles.closeButtonText}>Aceptar</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Modal de números de uñas */}
       <Modal
         visible={showNumberModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={toggleNumberModal} // Cerrar el modal si el usuario presiona el botón de atrás
+        onRequestClose={toggleNumberModal}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Números de Uña</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={() => alert('Seleccionaste Uña #1')}>
-              <Text style={styles.modalButtonText}>#1</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton} onPress={() => alert('Seleccionaste Uña #2')}>
-              <Text style={styles.modalButtonText}>#2</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton} onPress={() => alert('Seleccionaste Uña #3')}>
-              <Text style={styles.modalButtonText}>#3</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={toggleNumberModal}>
-              <Text style={styles.closeButtonText}>Cerrar</Text>
+            <Picker
+              selectedValue={selectedNumber}
+              onValueChange={(itemValue) => setSelectedNumber(itemValue)}
+              style={styles.picker}
+            >
+              <Picker.Item label="#1" value="1" />
+              <Picker.Item label="#2" value="2" />
+              <Picker.Item label="#3" value="3" />
+              <Picker.Item label="#4" value="4" />
+              <Picker.Item label="#5" value="5" />
+              <Picker.Item label="#6" value="6" />
+              <Picker.Item label="#7" value="7" />
+              <Picker.Item label="#8" value="8" />
+            </Picker>
+            <TouchableOpacity 
+              style={styles.closeButton} 
+              onPress={() => {
+                alert(`Seleccionaste Uña #${selectedNumber}`);
+                toggleNumberModal();
+              }}
+            >
+              <Text style={styles.closeButtonText}>Aceptar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -100,38 +124,38 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#F4F4F4',
     width: Platform.select({
-      ios: '100%', // Para dispositivos móviles y tabletas (iOS)
-      android: '100%', // Para dispositivos móviles y tabletas (Android)
-      web: '70%', // Para escritorio
+      ios: '100%',
+      android: '100%',
+      web: '70%',
     }),
     height: Platform.select({
-      ios: '80%', // Para dispositivos móviles (iOS)
-      android: '80%', // Para dispositivos móviles (Android)
-      web: '90%', // Para escritorio
+      ios: '80%',
+      android: '80%',
+      web: '90%',
     }),
-    alignSelf: 'center', // Centra el contenedor en el centro de la pantalla
-    justifyContent: 'center', // Centra el contenido dentro del contenedor
-    borderRadius: 16, // Bordes redondeados
-    padding: 16, // Espaciado interno (opcional)
-    shadowColor: '#000', // Sombra para dar profundidad (opcional)
+    alignSelf: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 4, // Sombra para Android
+    elevation: 4,
     marginTop: Platform.select({
-      ios: 10, // Solo en móviles iOS
-      android: 0, // Solo en móviles Android
-      web: 0, // Sin margen superior en escritorio
+      ios: 10,
+      android: 0,
+      web: 0,
     }),
-    position: 'relative', // Necesario para posicionar los botones adicionales
+    position: 'relative',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333', // Color del texto del título
-    textAlign: 'center', // Centra el título horizontalmente
-    position: 'absolute', // Posiciona el título de manera absoluta
-    top: 10, // Lo coloca en la parte superior del contenedor (puedes ajustar el valor)
+    color: '#333',
+    textAlign: 'center',
+    position: 'absolute',
+    top: 10,
     left: 0,
     right: 0,
   },  
@@ -141,8 +165,8 @@ const styles = StyleSheet.create({
     left: 10,
     padding: 12,
     backgroundColor: '#fff',
-    borderRadius: 50, // Botón redondeado
-    elevation: 4, // Sombra para Android
+    borderRadius: 50,
+    elevation: 4,
   },
   extraButtonsContainer: {
     position: 'absolute',
@@ -154,14 +178,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 50,
     marginBottom: 10,
-    elevation: 4, // Sombra para Android
+    elevation: 4,
   },
-  // Estilos del Modal
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)', // Fondo transparente negro
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  picker: {
+    width: '100%',
+    height: 150,
+    marginBottom: 20,
   },
   modalContent: {
     backgroundColor: '#fff',

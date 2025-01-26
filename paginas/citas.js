@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import AwesomeAlert from 'react-native-awesome-alerts';
+import { Audio } from 'expo-av'; // Importa el módulo de audio
 import { styles } from '../estilos/citas_st'; // Importar los estilos desde styles.js
 
 export default function AppointmentScheduler() {
@@ -47,11 +48,21 @@ export default function AppointmentScheduler() {
     setSelectedDate(day.dateString);
   };
 
-  const handleConfirmAppointment = () => {
+  const handleConfirmAppointment = async () => {
     // Crear el mensaje del alert
     const message = `Nombre: ${name}\nTeléfono: ${phone}\nFecha: ${selectedDate}\nHora: ${selectedTime}`;
     setAlertMessage(message);
     setShowAlert(true); // Mostrar el alert
+
+    // Reproducir el audio de éxito
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require('../sonidos/exito.mp3') // Ruta del archivo de audio
+      );
+      await sound.playAsync(); // Reproducir el audio
+    } catch (error) {
+      console.error('Error al reproducir el audio:', error);
+    }
   };
 
   const isFormValid = name && phone && selectedTime;

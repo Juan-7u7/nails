@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, StatusBar, SafeAreaView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Audio } from 'expo-av'; // Importar Audio
 import styles from './estilos/app_st';
 import ModalRegistro from './componentes/ModalRegistro';
 import AwesomeAlert from 'react-native-awesome-alerts';
@@ -15,8 +16,6 @@ import ComponenteWeb from './componentes/descargar';
 import InstagramLink from './componentes/instagram';
 import WhatsappLink from './componentes/whatsapp';
 import FacebookLink from './componentes/facebook';
-
-
 
 const Stack = createStackNavigator();
 
@@ -52,7 +51,6 @@ export default function App() {
   );
 }
 
-
 // Componente HomeScreen separado
 function HomeScreen({ navigation }) {
   const { width, height } = useWindowDimensions();
@@ -61,6 +59,27 @@ function HomeScreen({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertServiceName, setAlertServiceName] = useState('');
+
+  // Estado para manejar el audio
+  const [sound, setSound] = useState();
+
+  // Función para reproducir el sonido de bienvenida
+  const playWelcomeSound = async () => {
+    const { sound } = await Audio.Sound.createAsync(
+      require('./sonidos/welcome.mp3') // Ruta del archivo de audio
+    );
+    setSound(sound);
+    await sound.playAsync(); // Reproduce el sonido
+  };
+
+  // Reproduce el sonido al montar el componente
+  useEffect(() => {
+    playWelcomeSound();
+
+    return () => {
+      sound && sound.unloadAsync(); // Descargar el sonido cuando el componente se desmonte
+    };
+  }, []);
 
   const handleServiceClick = (screenName) => {
     navigation.navigate(screenName);
@@ -85,8 +104,6 @@ function HomeScreen({ navigation }) {
     setShowServices(false);
     setShowLoginForm(true);
   };
-
-
 
   return (
     <SafeAreaView style={styles.container}>
@@ -193,25 +210,10 @@ function HomeScreen({ navigation }) {
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       />
-
-
-      <AwesomeAlert
-        show={showAlert}
-        title="Has Seleccionado:"
-        message={alertServiceName}
-        closeOnTouchOutside={true}
-        closeOnHardwareBackPress={false}
-        showCancelButton={false}
-        showConfirmButton={true}
-        confirmText="Aceptar"
-        confirmButtonColor="#000"
-        onConfirmPressed={() => setShowAlert(false)}
-      />
     </SafeAreaView>
   );
 }
 
-// Pantallas adicionales
 function AgendarCitasScreen() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -220,12 +222,9 @@ function AgendarCitasScreen() {
   );
 }
 
-
-
 function CotizarScreen() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      {/* <Text>Pantalla de Cotizar</Text> */}
       <Cotizar />
     </View>
   );
@@ -234,9 +233,7 @@ function CotizarScreen() {
 function DiseñosScreen() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      {/* <Text>Pantalla de Diseños</Text> */}
       <Diseños />
     </View>
   );
 }
-
