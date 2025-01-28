@@ -10,8 +10,10 @@ export const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    width: '100%',
+    width: Platform.OS === 'web' ? 'min(65%, 600px)' : '100%', // Máximo 90% en web, pero sin exceder 600px
+    maxWidth: 600, // Para evitar que crezca demasiado en pantallas grandes
   },
+  
   title: {
     fontSize: 24,
     fontWeight: 'bold',
