@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import AwesomeAlert from 'react-native-awesome-alerts';
-import { Audio } from 'expo-av'; // Importa el módulo de audio
-import { styles } from '../estilos/citas_st'; // Importar los estilos desde styles.js
+import { Audio } from 'expo-av';
+import { styles } from '../estilos/citas_st';
 
 export default function AppointmentScheduler() {
   const { width } = useWindowDimensions();
@@ -20,8 +20,10 @@ export default function AppointmentScheduler() {
   const [selectedTime, setSelectedTime] = useState(null);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [showAlert, setShowAlert] = useState(false); // Estado para mostrar el alert
-  const [alertMessage, setAlertMessage] = useState(''); // Mensaje del alert
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [isHomeAppointment, setIsHomeAppointment] = useState(false); // Nuevo estado para checkbox
+  const [address, setAddress] = useState(''); // Nuevo estado para dirección
 
   const generateTimeSlots = () => {
     const slots = [];
@@ -49,23 +51,23 @@ export default function AppointmentScheduler() {
   };
 
   const handleConfirmAppointment = async () => {
-    // Crear el mensaje del alert
-    const message = `Nombre: ${name}\nTeléfono: ${phone}\nFecha: ${selectedDate}\nHora: ${selectedTime}`;
+    const message = `Nombre: ${name}\nTeléfono: ${phone}\nFecha: ${selectedDate}\nHora: ${selectedTime}${
+      isHomeAppointment ? `\nDirección: ${address}` : ''
+    }`;
     setAlertMessage(message);
-    setShowAlert(true); // Mostrar el alert
+    setShowAlert(true);
 
-    // Reproducir el audio de éxito
     try {
       const { sound } = await Audio.Sound.createAsync(
-        require('../sonidos/exito.mp3') // Ruta del archivo de audio
+        require('../sonidos/exito.mp3')
       );
-      await sound.playAsync(); // Reproducir el audio
+      await sound.playAsync();
     } catch (error) {
       console.error('Error al reproducir el audio:', error);
     }
   };
 
-  const isFormValid = name && phone && selectedTime;
+  const isFormValid = name && phone && selectedTime && (!isHomeAppointment || address.trim() !== '');
 
   return (
     <ScrollView style={styles.container}>
@@ -90,6 +92,28 @@ export default function AppointmentScheduler() {
             autoCapitalize="none"
           />
         </View>
+
+        {/* Checkbox para cita a domicilio */}
+        <View style={styles.inputGroup}>
+          <Pressable
+            onPress={() => setIsHomeAppointment(!isHomeAppointment)}
+            style={styles.checkboxContainer}
+          >
+            <View style={[styles.checkbox, isHomeAppointment && styles.checkboxChecked]} />
+            <Text style={styles.checkboxLabel}>¿Es una cita a domicilio?</Text>
+          </Pressable>
+        </View>
+
+        {/* Input de dirección si es a domicilio */}
+        {isHomeAppointment && (
+          <TextInput
+            style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
+            placeholder="Ingrese su dirección"
+            placeholderTextColor="#666"
+            value={address}
+            onChangeText={setAddress}
+          />
+        )}
 
         <Text style={styles.sectionTitle}>Elige tu fecha</Text>
         <View style={styles.calendarWrapper}>
@@ -142,31 +166,26 @@ export default function AppointmentScheduler() {
         </ScrollView>
 
         <Pressable
-          style={[
-            styles.button,
-            !isFormValid && styles.buttonDisabled,
-            Platform.OS === 'web' && styles.buttonWeb,
-          ]}
+          style={[styles.button, !isFormValid && styles.buttonDisabled]}
           onPress={handleConfirmAppointment}
           disabled={!isFormValid}
         >
-          <Text style={styles.buttonText}>Confirmar cita</Text>
+          <Text style={styles.buttonText}>Confirmar Cita</Text>
         </Pressable>
-      </View>
 
-      {/* Componente de AwesomeAlert */}
-      <AwesomeAlert
-        show={showAlert}
-        title="Tu cita ha sido agendada:"
-        message={alertMessage}
-        closeOnTouchOutside={true}
-        closeOnHardwareBackPress={false}
-        showCancelButton={false}
-        showConfirmButton={true}
-        confirmText="Aceptar"
-        confirmButtonColor="#000"
-        onConfirmPressed={() => setShowAlert(false)} // Ocultar el alert
-      />
+        <AwesomeAlert
+          show={showAlert}
+          showProgress={false}
+          title="Cita Confirmada"
+          message={alertMessage}
+          closeOnTouchOutside={true}
+          closeOnHardwareBackPress={false}
+          showConfirmButton={true}
+          confirmText="OK"
+          confirmButtonColor="#000"
+          onConfirmPressed={() => setShowAlert(false)}
+        />
+      </View>
     </ScrollView>
   );
 }

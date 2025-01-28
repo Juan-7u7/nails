@@ -85,4 +85,28 @@ export const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 4,
+    marginRight: 10,
+  },
+  
+  checkboxChecked: {
+    backgroundColor: '#000',
+  },
+  
+  checkboxLabel: {
+    fontSize: 16,
+    color: '#000',
+  },
+  
 });
