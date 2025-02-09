@@ -16,6 +16,7 @@ import ComponenteWeb from './componentes/descargar';
 import InstagramLink from './componentes/instagram';
 import WhatsappLink from './componentes/whatsapp';
 import FacebookLink from './componentes/facebook';
+import Administrador from './paginas/administrador';
 
 const Stack = createStackNavigator();
 
@@ -45,6 +46,12 @@ export default function App() {
             component={DiseñosScreen}
             options={{ title: 'Diseños' }}
           />
+          <Stack.Screen
+  name="Administrador"
+  component={Administrador}
+  options={{ title: 'Panel de Administrador', headerShown: false }}
+/>
+
         </Stack.Navigator>
       </NavigationContainer>
     </ScrollView>
@@ -155,9 +162,13 @@ function HomeScreen({ navigation }) {
                   placeholderTextColor="#888"
                   secureTextEntry
                 />
-                <TouchableOpacity style={styles.loginButton}>
-                  <Text style={styles.buttonText}>Iniciar Sesión</Text>
-                </TouchableOpacity>
+                <TouchableOpacity 
+  style={styles.loginButton} 
+  onPress={() => navigation.navigate('Administrador')}  // Redirige a la nueva pantalla
+>
+  <Text style={styles.buttonText}>Iniciar Sesión</Text>
+</TouchableOpacity>
+
 
                 <TouchableOpacity style={styles.buttonBack} onPress={toggleBackToServices}>
                   <Text style={styles.buttonText}>Volver a los Servicios</Text>
