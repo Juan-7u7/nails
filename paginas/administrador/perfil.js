@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 
 const PerfilScreen = () => {
-  const [editMode, setEditMode] = useState(false); // Modo edición
+  const [editMode, setEditMode] = useState(false);
   const [profile, setProfile] = useState({
     name: 'Nails Studio',
-    photo: 'https://via.placeholder.com/150', // Reemplazar con la URL de la foto real
+    photo: 'https://via.placeholder.com/150',
   });
 
   const [highlights, setHighlights] = useState([
@@ -15,8 +16,10 @@ const PerfilScreen = () => {
     { id: '3', title: 'Manicura', image: 'https://via.placeholder.com/100' },
   ]);
 
-  const [selectedHighlight, setSelectedHighlight] = useState(null); // Highlight seleccionado
-  const [isModalVisible, setModalVisible] = useState(false); // Control del modal
+  const [selectedHighlight, setSelectedHighlight] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const navigation = useNavigation();
 
   const handleEditToggle = () => setEditMode(!editMode);
 
@@ -32,24 +35,38 @@ const PerfilScreen = () => {
     const newHighlight = {
       id: (highlights.length + 1).toString(),
       title: `Nuevo ${highlights.length + 1}`,
-      image: 'https://via.placeholder.com/100', // Imagen ficticia
+      image: 'https://via.placeholder.com/100',
     };
     setHighlights([...highlights, newHighlight]);
   };
 
   const handleLongPress = (highlight) => {
-    setSelectedHighlight(highlight); // Guardar el highlight seleccionado
-    setModalVisible(true); // Mostrar el modal
+    setSelectedHighlight(highlight);
+    setModalVisible(true);
   };
 
   const deleteHighlight = () => {
     setHighlights((prev) => prev.filter((highlight) => highlight.id !== selectedHighlight.id));
-    setModalVisible(false); // Cerrar el modal
-    setSelectedHighlight(null); // Limpiar el highlight seleccionado
+    setModalVisible(false);
+    setSelectedHighlight(null);
   };
+
+  const handleLogout = () => {
+    setLogoutModalVisible(false);
+    navigation.navigate('Home'); // Cambia 'Home' al nombre de tu pantalla principal
+  };
+  
 
   return (
     <View style={styles.container}>
+      {/* Botón de Logout */}
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={() => setLogoutModalVisible(true)}
+      >
+        <Icon name="logout" size={24} color="white" />
+      </TouchableOpacity>
+
       {/* Botón de edición */}
       <TouchableOpacity style={styles.editButton} onPress={handleEditToggle}>
         <Icon name="edit" size={24} color="black" />
@@ -105,7 +122,7 @@ const PerfilScreen = () => {
           horizontal
           renderItem={({ item }) => (
             <TouchableOpacity
-              onLongPress={() => handleLongPress(item)} // Detectar clic largo
+              onLongPress={() => handleLongPress(item)}
               delayLongPress={300}
             >
               <View style={styles.highlight}>
@@ -157,6 +174,31 @@ const PerfilScreen = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Modal para Logout */}
+      <Modal
+        transparent
+        visible={logoutModalVisible}
+        animationType="slide"
+        onRequestClose={() => setLogoutModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>¿Deseas cerrar sesión?</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalButton} onPress={handleLogout}>
+                <Text style={styles.modalButtonText}>Sí</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: 'gray' }]}
+                onPress={() => setLogoutModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -168,6 +210,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     alignItems: 'center',
     padding: 20,
+  },
+  logoutButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    backgroundColor: 'black',
+    padding: 10,
+    borderRadius: 8,
+    elevation: 3,
   },
   editButton: {
     position: 'absolute',

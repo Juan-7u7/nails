@@ -26,7 +26,7 @@ const ComponenteWeb = () => {
 
   const handleDownload = async () => {
     // Enlace directo de descarga en Dropbox
-    const apkUrl = 'https://www.dropbox.com/scl/fi/pu4rz8h96dvgkdjxhkvim/Nails.apk?rlkey=qj1xfmvqe5jk82fg9xtf5t2g9&st=7upvzjey&dl=1';
+    const apkUrl = 'https://www.dropbox.com/scl/fi/dv9s0mp6vqpzidgc12z47/Nails.apk?rlkey=lw8n9pd7x7pv98upmpfj6r00a&st=lybm1hd4&dl=1';
 
     // Verificar si la URL puede ser abierta
     const supported = await Linking.canOpenURL(apkUrl);
