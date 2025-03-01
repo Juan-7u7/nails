@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView } from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import styles from '../estilos/modal_st';
 import { supabase } from '../supabaseclient';
@@ -12,45 +12,80 @@ const ModalRegistro = ({ visible, onClose }) => {
   const [alertSuccess, setAlertSuccess] = useState(false);
   const [alertError, setAlertError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [alertEmailExists, setAlertEmailExists] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Función para manejar el registro del usuario
   const handleRegister = async () => {
-    console.log("Verificando existencia del correo:", correo);
+    setIsLoading(true);
 
-    // Verificar si el correo ya está registrado
-    const { data: existingUsers, error: fetchError } = await supabase
-      .from('administradores')
-      .select('correo')
-      .eq('correo', correo);
-
-    if (fetchError) {
-      console.error("Error al verificar el correo:", fetchError);
-      setErrorMessage(fetchError.message);
+    // Validación de campos
+    if (!nombre || !estudio || !correo || !contrasena) {
+      setErrorMessage("Todos los campos son obligatorios.");
       setAlertError(true);
+      setIsLoading(false);
       return;
     }
 
-    if (existingUsers.length > 0) {
-      console.warn("El correo ya está registrado:", correo);
-      setAlertEmailExists(true);
-      return;
-    }
-
-    console.log("Registrando usuario:", { nombre, estudio, correo, contrasena });
-
-    const { data, error } = await supabase
-      .from('administradores')
-      .insert([{ nombre, estudio, correo, pass: contrasena }]);
-
-    if (error) {
-      console.error("Error al registrar usuario:", error);
-      setErrorMessage(error.message);
+    // Validación del formato del correo electrónico
+    if (!/\S+@\S+\.\S+/.test(correo)) {
+      setErrorMessage("Por favor, introduce un correo electrónico válido.");
       setAlertError(true);
+      setIsLoading(false);
       return;
     }
 
-    console.log("Usuario registrado:", data);
-    setAlertSuccess(true);
+    // Validación de la longitud de la contraseña
+    if (contrasena.length < 6) {
+      setErrorMessage("La contraseña debe tener al menos 6 caracteres.");
+      setAlertError(true);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      console.log("Registrando usuario:", { nombre, estudio, correo });
+
+      // Insertar el usuario en la base de datos
+      const { data, error } = await supabase
+        .from('administradores')
+        .insert([{ nombre, estudio, correo, pass: contrasena }]);
+
+      if (error) {
+        console.error("Error al registrar usuario:", error);
+
+        // Manejo de errores específicos
+        if (error.code === '23505') {
+          if (error.message.includes('administradores_correo_key')) {
+            setErrorMessage("El correo electrónico ya está registrado.");
+          } else if (error.message.includes('administradores_estudio_key')) {
+            setErrorMessage("El estudio ya está registrado.");
+          } else {
+            setErrorMessage("El registro ya existe. Verifica los datos.");
+          }
+        } else {
+          setErrorMessage("Hubo un problema al registrar el usuario.");
+        }
+
+        setAlertError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Usuario registrado:", data);
+      setAlertSuccess(true); // Muestra la alerta de éxito
+    } catch (error) {
+      console.error("Error en el proceso de registro:", error);
+      setErrorMessage("Hubo un problema al registrar el usuario.");
+      setAlertError(true);
+    } finally {
+      setIsLoading(false);
+
+      // Limpiar los campos del formulario
+      setNombre('');
+      setEstudio('');
+      setCorreo('');
+      setContrasena('');
+    }
   };
 
   return (
@@ -64,6 +99,7 @@ const ModalRegistro = ({ visible, onClose }) => {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalContainer}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         >
           <View style={styles.formContainer}>
             <Text style={styles.title}>Formulario de Registro</Text>
@@ -99,8 +135,16 @@ const ModalRegistro = ({ visible, onClose }) => {
               secureTextEntry
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleRegister}>
-              <Text style={styles.buttonText}>Registrarse</Text>
+            <TouchableOpacity 
+              style={[styles.button, isLoading && styles.buttonDisabled]} 
+              onPress={handleRegister}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Registrarse</Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.buttonClose} onPress={onClose}>
@@ -109,21 +153,6 @@ const ModalRegistro = ({ visible, onClose }) => {
           </View>
         </KeyboardAvoidingView>
       </View>
-
-      {/* Alerta de Correo Existente */}
-      <AwesomeAlert
-        show={alertEmailExists}
-        title="Correo ya registrado"
-        message="El correo ingresado ya está registrado. Intente con otro."
-        closeOnTouchOutside={true}
-        closeOnHardwareBackPress={false}
-        showConfirmButton={true}
-        confirmText="OK"
-        confirmButtonColor="#000"
-        onConfirmPressed={() => {
-          setAlertEmailExists(false);
-        }}
-      />
 
       {/* Alerta de Éxito */}
       <AwesomeAlert
@@ -137,7 +166,7 @@ const ModalRegistro = ({ visible, onClose }) => {
         confirmButtonColor="#000"
         onConfirmPressed={() => {
           setAlertSuccess(false);
-          onClose();
+          onClose(); // Cierra el modal al confirmar
         }}
       />
 
