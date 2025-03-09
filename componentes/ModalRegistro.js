@@ -17,76 +17,63 @@ const ModalRegistro = ({ visible, onClose }) => {
   // Función para manejar el registro del usuario
   const handleRegister = async () => {
     setIsLoading(true);
-
-    // Validación de campos
+  
     if (!nombre || !estudio || !correo || !contrasena) {
       setErrorMessage("Todos los campos son obligatorios.");
       setAlertError(true);
       setIsLoading(false);
       return;
     }
-
-    // Validación del formato del correo electrónico
+  
     if (!/\S+@\S+\.\S+/.test(correo)) {
       setErrorMessage("Por favor, introduce un correo electrónico válido.");
       setAlertError(true);
       setIsLoading(false);
       return;
     }
-
-    // Validación de la longitud de la contraseña
+  
     if (contrasena.length < 6) {
       setErrorMessage("La contraseña debe tener al menos 6 caracteres.");
       setAlertError(true);
       setIsLoading(false);
       return;
     }
-
+  
     try {
-      console.log("Registrando usuario:", { nombre, estudio, correo });
-
-      // Insertar el usuario en la base de datos
-      const { data, error } = await supabase
-        .from('administradores')
-        .insert([{ nombre, estudio, correo, pass: contrasena }]);
-
-      if (error) {
-        console.error("Error al registrar usuario:", error);
-
-        // Manejo de errores específicos
-        if (error.code === '23505') {
-          if (error.message.includes('administradores_correo_key')) {
-            setErrorMessage("El correo electrónico ya está registrado.");
-          } else if (error.message.includes('administradores_estudio_key')) {
-            setErrorMessage("El estudio ya está registrado.");
-          } else {
-            setErrorMessage("El registro ya existe. Verifica los datos.");
-          }
-        } else {
-          setErrorMessage("Hubo un problema al registrar el usuario.");
-        }
-
-        setAlertError(true);
-        setIsLoading(false);
-        return;
+      // Registrar usuario en autenticación de Supabase
+      const { user, error: authError } = await supabase.auth.signUp({
+        email: correo,
+        password: contrasena,
+      });
+  
+      if (authError) {
+        throw authError;
       }
-
+  
+      // Insertar datos en la tabla administradores
+      const { data, error: dbError } = await supabase
+        .from('administradores')
+        .insert([{ nombre, estudio, correo, contraseña: contrasena }]); // Asegúrate de que la columna se llama "contraseña" en Supabase
+  
+      if (dbError) {
+        throw dbError;
+      }
+  
       console.log("Usuario registrado:", data);
-      setAlertSuccess(true); // Muestra la alerta de éxito
+      setAlertSuccess(true);
     } catch (error) {
-      console.error("Error en el proceso de registro:", error);
-      setErrorMessage("Hubo un problema al registrar el usuario.");
+      console.error("Error en el proceso de registro:", error.message);
+      setErrorMessage(error.message || "Hubo un problema al registrar el usuario.");
       setAlertError(true);
     } finally {
       setIsLoading(false);
-
-      // Limpiar los campos del formulario
       setNombre('');
       setEstudio('');
       setCorreo('');
       setContrasena('');
     }
   };
+  
 
   return (
     <Modal

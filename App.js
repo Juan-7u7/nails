@@ -17,6 +17,13 @@ import InstagramLink from './componentes/instagram';
 import WhatsappLink from './componentes/whatsapp';
 import FacebookLink from './componentes/facebook';
 import Administrador from './paginas/administrador';
+import { createClient } from '@supabase/supabase-js';
+import { supabase } from './supabaseclient'; // Ajusta la ruta si es necesario
+// import { supabase } from '../nails/supabaseclient';
+import { Alert } from 'react-native';
+
+
+
 
 const Stack = createStackNavigator();
 
@@ -67,6 +74,13 @@ function HomeScreen({ navigation }) {
   const [showAlert, setShowAlert] = useState(false);
   const [alertServiceName, setAlertServiceName] = useState('');
 
+  // const { width, height } = useWindowDimensions();
+  // const [showServices, setShowServices] = useState(true);
+  // const [showLoginForm, setShowLoginForm] = useState(false);
+  const [email, setEmail] = useState(''); // Estado para el correo
+  const [password, setPassword] = useState(''); // Estado para la contraseña
+  const [loading, setLoading] = useState(false);
+
   // Estado para manejar el audio
   const [sound, setSound] = useState();
 
@@ -112,6 +126,44 @@ function HomeScreen({ navigation }) {
     setShowLoginForm(true);
   };
 
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Por favor, ingrese su correo y contraseña.");
+      return;
+    }
+  
+    setLoading(true);
+  
+    try {
+      // Buscar en la tabla "administradores" si el usuario existe
+      const { data, error } = await supabase
+        .from('administradores')
+        .select('correo, contraseña') // Asegúrate de que el campo se llama "contraseña" en la DB
+        .eq('correo', email)
+        .eq('contraseña', password) // Comparar la contraseña con la base de datos
+        .maybeSingle(); // Devuelve un solo registro si existe
+  
+      if (error) {
+        throw error;
+      }
+  
+      if (!data) {
+        Alert.alert("Error", "Correo o contraseña incorrectos.");
+        setLoading(false);
+        return;
+      }
+  
+      console.log("Inicio de sesión exitoso:", data);
+      navigation.replace("Administrador"); // Redirigir al panel de administración
+  
+    } catch (error) {
+      console.log("Error en el inicio de sesión:", error);
+      Alert.alert("Error", "Hubo un problema con la conexión.");
+    } finally {
+      setLoading(false);
+    }
+  };  
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" />
@@ -149,25 +201,33 @@ function HomeScreen({ navigation }) {
             </View>
 
             {showLoginForm && (
-              <KeyboardAvoidingView style={styles.loginContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+              <KeyboardAvoidingView 
+                style={styles.loginContainer} 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              >
                 <TextInput
                   style={styles.input}
                   placeholder="Correo Electrónico"
                   placeholderTextColor="#888"
                   keyboardType="email-address"
+                  value={email}
+                  onChangeText={setEmail} // Capturar el valor ingresado
                 />
                 <TextInput
                   style={styles.input}
                   placeholder="Contraseña"
                   placeholderTextColor="#888"
                   secureTextEntry
+                  value={password}
+                  onChangeText={setPassword} // Capturar la contraseña ingresada
                 />
                 <TouchableOpacity 
-  style={styles.loginButton} 
-  onPress={() => navigation.navigate('Administrador')}  // Redirige a la nueva pantalla
->
-  <Text style={styles.buttonText}>Iniciar Sesión</Text>
-</TouchableOpacity>
+                  style={styles.loginButton} 
+                  onPress={handleLogin} 
+                  disabled={loading}
+                >
+                  <Text style={styles.buttonText}>{loading ? "Cargando..." : "Iniciar Sesión"}</Text>
+                </TouchableOpacity>
 
 
                 <TouchableOpacity style={styles.buttonBack} onPress={toggleBackToServices}>
