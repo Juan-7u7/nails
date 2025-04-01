@@ -183,7 +183,7 @@ function HomeScreen({ navigation }) {
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Bienvenida</Text>
-            <Text style={styles.cardText}>Sientete comoda en explorar cada uno de nuestros apartados y disfrutar de nuestros servicios.</Text>
+            <Text style={styles.cardText}>Sientete comoda en explorar cada uno de nuestros apartados y disfrutar de los servicios.</Text>
           </View>
 
           <View style={styles.transparentContainer}>
