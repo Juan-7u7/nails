@@ -12,37 +12,43 @@ import { Calendar } from 'react-native-calendars';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Audio } from 'expo-av';
 import { styles } from '../estilos/citas_st';
+import { supabase } from '../supabaseclient';
+
+// Input reutilizable con estilos aplicados
+const StyledInput = ({ ...props }) => (
+  <TextInput
+    style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
+    placeholderTextColor="#666"
+    autoCapitalize="none"
+    {...props}
+  />
+);
+
+// Generador optimizado de horarios
+const generateTimeSlots = () => {
+  const slots = [];
+  for (let i = 8 * 60; i < 20 * 60; i += 30) {
+    const hour = Math.floor(i / 60);
+    const minute = i % 60;
+    slots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+  }
+  return slots;
+};
 
 export default function AppointmentScheduler() {
   const { width } = useWindowDimensions();
-  const [date, setDate] = useState(new Date());
+  const [date] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(date.toISOString().split('T')[0]);
   const [selectedTime, setSelectedTime] = useState(null);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+  });
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
-  const [isHomeAppointment, setIsHomeAppointment] = useState(false); // Nuevo estado para checkbox
-  const [address, setAddress] = useState(''); // Nuevo estado para dirección
-
-  const generateTimeSlots = () => {
-    const slots = [];
-    let hour = 8;
-    let minute = 0;
-
-    while (hour < 20) {
-      const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      slots.push(time);
-      minute += 30;
-      hour += 1;
-
-      if (minute >= 60) {
-        minute -= 60;
-        hour += 1;
-      }
-    }
-    return slots;
-  };
+  const [isHomeAppointment, setIsHomeAppointment] = useState(false);
 
   const timeSlots = generateTimeSlots();
 
@@ -50,10 +56,32 @@ export default function AppointmentScheduler() {
     setSelectedDate(day.dateString);
   };
 
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const isFormValid = () => {
+    const { name, phone, email, address } = formData;
+    return name && phone && email && selectedTime && (!isHomeAppointment || address.trim() !== '');
+  };
+
   const handleConfirmAppointment = async () => {
-    const message = `Nombre: ${name}\nTeléfono: ${phone}\nFecha: ${selectedDate}\nHora: ${selectedTime}${
+    const { name, phone, email, address } = formData;
+
+    if (!selectedDate || !selectedTime) {
+      console.error('❗ selectedDate o selectedTime no están definidos');
+      return;
+    }
+
+    const fecha = selectedDate; // formato: YYYY-MM-DD
+    const hora = `${selectedTime}:00`; // formato: HH:mm:ss
+
+    console.log('🧾 Insertando cita con →', { fecha, hora });
+
+    const message = `Nombre: ${name}\nTeléfono: ${phone}\nCorreo: ${email}\nFecha: ${fecha}\nHora: ${selectedTime}${
       isHomeAppointment ? `\nDirección: ${address}` : ''
     }`;
+
     setAlertMessage(message);
     setShowAlert(true);
 
@@ -65,9 +93,40 @@ export default function AppointmentScheduler() {
     } catch (error) {
       console.error('Error al reproducir el audio:', error);
     }
-  };
 
-  const isFormValid = name && phone && selectedTime && (!isHomeAppointment || address.trim() !== '');
+    try {
+      const { data, error } = await supabase.from('citas').insert([
+        {
+          nombre: name,
+          correo: email,
+          fecha: fecha,
+          hora: hora,
+          direccion: isHomeAppointment ? address : 'En consultorio',
+          numero_celular: phone,
+        },
+      ]);
+
+      console.log('Resultado insert →', { data, error });
+
+      if (error) {
+        console.error('❌ Error al guardar la cita:', error.message);
+      } else {
+        console.log('✅ Cita registrada correctamente en Supabase.');
+
+        // Limpiar formulario
+        setFormData({
+          name: '',
+          phone: '',
+          email: '',
+          address: '',
+        });
+        setSelectedTime(null);
+        setIsHomeAppointment(false);
+      }
+    } catch (err) {
+      console.error('❗ Error inesperado:', err.message);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -75,21 +134,22 @@ export default function AppointmentScheduler() {
         <Text style={styles.title}>Agendar cita</Text>
 
         <View style={styles.inputGroup}>
-          <TextInput
-            style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
+          <StyledInput
             placeholder="Nombre completo"
-            placeholderTextColor="#666"
-            value={name}
-            onChangeText={setName}
+            value={formData.name}
+            onChangeText={(text) => handleChange('name', text)}
           />
-          <TextInput
-            style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
+          <StyledInput
             placeholder="Número de teléfono"
-            placeholderTextColor="#666"
             keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-            autoCapitalize="none"
+            value={formData.phone}
+            onChangeText={(text) => handleChange('phone', text)}
+          />
+          <StyledInput
+            placeholder="E-mail"
+            keyboardType="email-address"
+            value={formData.email}
+            onChangeText={(text) => handleChange('email', text)}
           />
         </View>
 
@@ -106,12 +166,10 @@ export default function AppointmentScheduler() {
 
         {/* Input de dirección si es a domicilio */}
         {isHomeAppointment && (
-          <TextInput
-            style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
+          <StyledInput
             placeholder="Ingrese su dirección"
-            placeholderTextColor="#666"
-            value={address}
-            onChangeText={setAddress}
+            value={formData.address}
+            onChangeText={(text) => handleChange('address', text)}
           />
         )}
 
@@ -166,9 +224,9 @@ export default function AppointmentScheduler() {
         </ScrollView>
 
         <Pressable
-          style={[styles.button, !isFormValid && styles.buttonDisabled]}
+          style={[styles.button, !isFormValid() && styles.buttonDisabled]}
           onPress={handleConfirmAppointment}
-          disabled={!isFormValid}
+          disabled={!isFormValid()}
         >
           <Text style={styles.buttonText}>Confirmar Cita</Text>
         </Pressable>
