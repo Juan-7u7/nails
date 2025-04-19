@@ -14,7 +14,7 @@ import { Audio } from 'expo-av';
 import { styles } from '../estilos/citas_st';
 import { supabase } from '../supabaseclient';
 
-// Input reutilizable con estilos aplicados
+// Componente reutilizable de input estilizado
 const StyledInput = ({ ...props }) => (
   <TextInput
     style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
@@ -37,6 +37,10 @@ const generateTimeSlots = () => {
 
 export default function AppointmentScheduler() {
   const { width } = useWindowDimensions();
+
+const isWeb = Platform.OS === 'web';
+const isMobileWeb = isWeb && width <= 500;
+
   const [date] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(date.toISOString().split('T')[0]);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -73,10 +77,8 @@ export default function AppointmentScheduler() {
       return;
     }
 
-    const fecha = selectedDate; // formato: YYYY-MM-DD
-    const hora = `${selectedTime}:00`; // formato: HH:mm:ss
-
-    console.log('🧾 Insertando cita con →', { fecha, hora });
+    const fecha = selectedDate;
+    const hora = `${selectedTime}:00`;
 
     const message = `Nombre: ${name}\nTeléfono: ${phone}\nCorreo: ${email}\nFecha: ${fecha}\nHora: ${selectedTime}${
       isHomeAppointment ? `\nDirección: ${address}` : ''
@@ -99,8 +101,8 @@ export default function AppointmentScheduler() {
         {
           nombre: name,
           correo: email,
-          fecha: fecha,
-          hora: hora,
+          fecha,
+          hora,
           direccion: isHomeAppointment ? address : 'En consultorio',
           numero_celular: phone,
         },
@@ -112,14 +114,7 @@ export default function AppointmentScheduler() {
         console.error('❌ Error al guardar la cita:', error.message);
       } else {
         console.log('✅ Cita registrada correctamente en Supabase.');
-
-        // Limpiar formulario
-        setFormData({
-          name: '',
-          phone: '',
-          email: '',
-          address: '',
-        });
+        setFormData({ name: '', phone: '', email: '', address: '' });
         setSelectedTime(null);
         setIsHomeAppointment(false);
       }
@@ -129,8 +124,23 @@ export default function AppointmentScheduler() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={[styles.wrapper, { maxWidth: width > 600 ? 500 : '100%' }]}>
+    <ScrollView
+  style={styles.container}
+  contentContainerStyle={{
+    flexGrow: 1,
+    paddingBottom: 32,
+    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
+  }}
+>
+
+<View
+  style={[
+    styles.wrapper,
+    isMobileWeb && { width: '60%' },        // ✅ ancho amplio en web móvil
+    isWeb && !isMobileWeb && { width: '60%' } // ✅ más angosto en escritorio web
+  ]}
+>
+
         <Text style={styles.title}>Agendar cita</Text>
 
         <View style={styles.inputGroup}>
@@ -153,7 +163,6 @@ export default function AppointmentScheduler() {
           />
         </View>
 
-        {/* Checkbox para cita a domicilio */}
         <View style={styles.inputGroup}>
           <Pressable
             onPress={() => setIsHomeAppointment(!isHomeAppointment)}
@@ -164,7 +173,6 @@ export default function AppointmentScheduler() {
           </Pressable>
         </View>
 
-        {/* Input de dirección si es a domicilio */}
         {isHomeAppointment && (
           <StyledInput
             placeholder="Ingrese su dirección"

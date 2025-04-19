@@ -6,13 +6,14 @@ export const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   wrapper: {
-    flex: 1,
-    alignSelf: 'center',
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    width: Platform.OS === 'web' ? 'min(65%, 600px)' : '100%', // Máximo 90% en web, pero sin exceder 600px
-    maxWidth: 600, // Para evitar que crezca demasiado en pantallas grandes
+    maxWidth: 600,
+    alignSelf: 'center',
   },
+  
+  
   
   title: {
     fontSize: 24,
