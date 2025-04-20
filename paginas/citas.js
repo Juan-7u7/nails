@@ -107,21 +107,46 @@ const isMobileWeb = isWeb && width <= 500;
           numero_celular: phone,
         },
       ]);
-
+    
       console.log('Resultado insert →', { data, error });
-
+    
       if (error) {
         console.error('❌ Error al guardar la cita:', error.message);
       } else {
         console.log('✅ Cita registrada correctamente en Supabase.');
+    
+        // 🔗 Enviar correo desde backend Flask
+        try {
+          const response = await fetch('https://nails-backend-gric.onrender.com/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name,
+              phone,
+              email,
+              date: selectedDate,
+              time: selectedTime,
+              address,
+              isHomeAppointment,
+            }),
+          });
+          
+    
+          const result = await response.json();
+          console.log('📬 Correo enviado desde Flask:', result);
+        } catch (flaskError) {
+          console.error('❌ Error al enviar correo con Flask:', flaskError);
+        }
+    
+        // Reiniciar formulario
         setFormData({ name: '', phone: '', email: '', address: '' });
         setSelectedTime(null);
         setIsHomeAppointment(false);
       }
     } catch (err) {
-      console.error('❗ Error inesperado:', err.message);
+      console.error('❗ Error inesperado al guardar cita:', err.message);
     }
-  };
+  };    
 
   return (
     <ScrollView
