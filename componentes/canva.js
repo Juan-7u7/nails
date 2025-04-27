@@ -1,101 +1,92 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Dimensions, ScrollView } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons"; // Asegúrate de tener la librería instalada
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Dimensions, Image, ActivityIndicator } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const CardWithVerticalContainers = () => {
-  const [buttons, setButtons] = useState([]); // Estado para los botones adicionales
-  const [lastPress, setLastPress] = useState(0); // Para detectar doble clic
-  const [inputText, setInputText] = useState(''); // Estado para el texto del input
+  const [inputText, setInputText] = useState('');
+  const [imageUri, setImageUri] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Función para agregar un nuevo botón al estado
-  const addButton = () => {
-    setButtons([...buttons, { id: Date.now() }]); // Agrega un nuevo botón vacío al estado con un ID único
-  };
-
-  // Función para eliminar un botón del estado
-  const deleteButton = (id) => {
-    setButtons(buttons.filter(button => button.id !== id)); // Filtra el botón que debe eliminarse
-  };
-
-  // Función para manejar el doble clic
-  const handlePress = (id) => {
-    const currentTime = Date.now();
-    if (currentTime - lastPress < 300) { // Detecta doble clic si es menor a 300ms
-      deleteButton(id);
-    }
-    setLastPress(currentTime);
-  };
-
-  const handleSend = () => {
+  const handleSend = async () => {
     if (inputText.trim()) {
-      console.log('Texto enviado:', inputText);
-      setInputText(''); // Limpiar el input después de enviarlo
+      try {
+        setLoading(true);
+
+        // Detectamos si el usuario escribió más de un color
+        const multipleColors = inputText.includes(",") || inputText.toLowerCase().includes(" y ");
+
+        const enhancedPrompt = multipleColors
+          ? `Five isolated nail-shaped containers, each one showing a design that combines these colors: ${inputText}. Each nail should have a creative mix of the colors mentioned, placed on a solid white background, no hands, no fingers, no skin, no objects, minimalistic, clean, vector illustration.`
+          : `Five isolated nail-shaped containers, each with the color: ${inputText}, placed on a solid white background, no hands, no fingers, no skin, no objects, minimalistic, clean, vector illustration.`;
+
+        const response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium-diffusers', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer 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',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ inputs: enhancedPrompt }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error generando imagen:', errorData);
+          throw new Error('Error generando imagen');
+        }
+
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64data = reader.result;
+          setImageUri(base64data);
+          setLoading(false);
+        };
+        reader.readAsDataURL(blob);
+
+      } catch (error) {
+        console.error('Error:', error);
+        setLoading(false);
+      }
+      setInputText('');
     }
   };
 
   return (
     <View style={styles.card}>
-      <View style={[styles.innerContainer, { flex: 0.10 }]}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.circleButton}>
-            <MaterialIcons name="category" size={24} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.circleButton}>
-            <MaterialIcons name="pin" size={24} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.circleButton}>
-            <MaterialIcons name="wallpaper" size={24} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.circleButton}>
-            <MaterialIcons name="undo" size={24} color="black" />
-          </TouchableOpacity>
-        </View>
+      {/* Imagen generada */}
+      <View style={[styles.innerContainer, { flex: 0.6, padding: 0 }]}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#000" />
+        ) : imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            style={styles.image}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={styles.text}>No hay imagen aún</Text>
+        )}
       </View>
-      <View style={[styles.innerContainer, { flex: 0.55 }]}>
-        <Text style={styles.text}>Contenedor 2</Text>
-      </View>
-      {/* Contenedor 3 dividido en 2 mitades con diferentes anchos */}
-      <View style={[styles.innerContainer, { flex: 0.35, flexDirection: 'row' }]}>
-        {/* Mitad 1 con 50% de ancho */}
-        <ScrollView
-          contentContainerStyle={{ alignItems: 'center', justifyContent: 'center' }}
-          style={styles.scrollView}
-        >
-          {/* El contenido dentro de esta mitad será desplazable */}
-          {/* Botón principal de "+" */}
-          <TouchableOpacity style={styles.button} onPress={addButton}>
-            <Text style={styles.buttonText}>+</Text>
+
+      {/* Input para escribir prompt */}
+      <View style={[styles.innerContainer, { flex: 0.4 }]}>
+        <Text style={styles.text}>Generador de Ideas</Text>
+
+        {/* Disclaimer */}
+        {/* <Text style={styles.disclaimer}>
+          Ejemplo: "Degradado azul y rojo" o "Rosa pastel"
+        </Text> */}
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Escribe tu idea..."
+          />
+          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+            <MaterialIcons name="send" size={24} color="white" />
           </TouchableOpacity>
-
-          {/* Aquí renderizamos los botones adicionales */}
-          {buttons.map((button) => (
-            <TouchableOpacity
-              key={button.id}
-              style={styles.button}
-              onPress={() => handlePress(button.id)} // Detecta el doble clic o clic prolongado
-              onLongPress={() => deleteButton(button.id)} // Detecta clic prolongado
-            >
-              {/* Aquí puedes reemplazar el texto por un icono de MaterialIcons */}
-              {/* <MaterialIcons name="favorite" size={24} color="black" /> */}
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Mitad 2 con 75% de ancho */}
-        <View style={[styles.halfContainer, { width: '75%', backgroundColor: '#e0e0e0', height: '100%',borderRadius: 10 }]}>
-          <Text style={styles.text}>Chat</Text>
-          {/* Input y botón */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Escribe tu idea..."
-            />
-            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-              <MaterialIcons name="send" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     </View>
@@ -112,58 +103,37 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    width: Dimensions.get("window").width * 0.9, // Ocupa el 90% del ancho de la pantalla
-    height: Dimensions.get("window").height * 0.9, // Ocupa el 80% de la altura de la pantalla
-    alignSelf: "center", // Centra el card horizontalmente
+    width: Dimensions.get("window").width * 0.9,
+    height: Dimensions.get("window").height * 0.9,
+    alignSelf: "center",
     marginVertical: 20,
-    justifyContent: "flex-start", // Los contenedores se alinean de arriba a abajo
+    justifyContent: "flex-start",
   },
   innerContainer: {
     backgroundColor: "#fff",
     borderRadius: 8,
     padding: 20,
-    marginVertical: 10, // Espacio entre los contenedores
-    alignItems: "center", // Centra el contenido dentro del contenedor
-    borderWidth: 2,  // Añadir borde
-    borderColor: "#fff",  // Color del borde
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "center", // Centra los botones horizontalmente
-    width: "100%",
-    alignItems: "center", // Centra los botones verticalmente
-    backgroundColor: "#fff",
-  },
-  circleButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25, // Esto hace que el botón sea circular
-    backgroundColor: "#fff", // Color blanco
-    marginHorizontal: 5, // Añade un pequeño margen horizontal para separar los botones
+    marginVertical: 10,
     alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 0,  // Elimina el borde
+    borderWidth: 2,
+    borderColor: "#fff",
+    overflow: 'hidden',
   },
   text: {
     fontSize: 16,
     color: "#333",
   },
-  halfContainer: {
-    justifyContent: "center", // Centra el contenido verticalmente
-    alignItems: "center", // Centra el contenido horizontalmente
-    height: '100%', // Asegura que ocupe toda la altura del contenedor
-  },
   inputContainer: {
-    flexDirection: 'row', // Alinea el input y el botón en una fila
-    width: '100%', // Ancho del contenedor del input
-    alignItems: 'center', // Centra los elementos verticalmente
-    marginTop: 130, // Un poco de espacio arriba
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 20,
   },
   input: {
-    flex: 1, // El input toma el espacio restante
-    height: 40, // Alto del input
+    flex: 1,
+    height: 40,
     borderColor: '#ccc',
-    backgroundColor : '#fff',
+    backgroundColor: '#fff',
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 10,
@@ -173,32 +143,16 @@ const styles = StyleSheet.create({
   sendButton: {
     width: 50,
     height: 50,
-    borderRadius: 25, // Hacemos que el botón sea circular
-    backgroundColor: '#000', // Color del botón
+    borderRadius: 25,
+    backgroundColor: '#000',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
   },
-  button: {
-    width: 60, // tamaño del botón cuadrado
-    height: 60, // tamaño del botón cuadrado
-    borderRadius: 15, // bordes redondeados
-    backgroundColor: '#fff', // color de fondo del botón
-    borderWidth: 2, // ancho del borde
-    borderColor: '#000', // color del borde negro
-    alignItems: 'center', // alinea el contenido (el símbolo '+')
-    justifyContent: 'center', // centra el texto
-    margin: 10, // margen alrededor del botón
-  },
-  buttonText: {
-    fontSize: 30, // tamaño del texto
-    color: '#000', // color del texto
-    fontWeight: 'bold', // texto en negrita
-  },
-  scrollView: {
-    width: '100%', // Esto asegura que ocupe el 100% del ancho disponible
-    height: Dimensions.get('window').height * 0.22, // Establece la altura del ScrollView
-    overflow: 'scroll', // Habilita el desplazamiento si el contenido excede la altura
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
 });
 
