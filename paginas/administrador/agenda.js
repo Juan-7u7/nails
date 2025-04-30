@@ -11,6 +11,8 @@ import {
 import { supabase } from '../../supabaseclient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import { Platform, Linking } from 'react-native';
+
 
 const CitasScreen = () => {
   const [citas, setCitas] = useState([]);
@@ -105,7 +107,17 @@ const CitasScreen = () => {
 `;
 
 
-    navigation.navigate('VistaPreviaCitas', { htmlContent });
+if (Platform.OS === 'web') {
+  // en la web, abrimos una nueva pestaña con el contenido HTML en base64
+  const htmlEncoded = encodeURIComponent(htmlContent);
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+} else {
+  // en móvil, usamos la WebView normal
+  navigation.navigate('VistaPreviaCitas', { htmlContent });
+}
+
   };
 
   const renderHeader = () => (
