@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
 import Checkbox from "expo-checkbox";
 import AwesomeAlert from "react-native-awesome-alerts";
+import { useNavigation } from "@react-navigation/native";
 
 const options = [
   { id: 1, question: "¿Qué forma de uñas prefieres?", choices: ["Cuadradas", "Ovaladas", "Almendra", "Stiletto"] },
@@ -26,10 +27,12 @@ const prices = {
   Permanente: 150,
 };
 
-export default function App() {
+export default function CotizarScreen() {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+
+  const navigation = useNavigation();
 
   const toggleOption = useCallback((questionId, choice) => {
     setSelectedOptions((prev) => ({ ...prev, [questionId]: choice }));
@@ -44,6 +47,11 @@ export default function App() {
     setShowAlert(true);
   };
 
+  const handleAgendar = () => {
+    setShowAlert(false);
+    navigation.navigate("AgendarCitas"); // asegúrate que esta ruta exista en tu Stack.Navigator
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Cotización de Uñas</Text>
@@ -55,7 +63,7 @@ export default function App() {
               <Checkbox
                 value={selectedOptions[id] === choice}
                 onValueChange={() => toggleOption(id, choice)}
-                color={selectedOptions[id] === choice ? "#f54291" : "#aaa"}
+                color={selectedOptions[id] === choice ? "#000" : "#aaa"}
               />
               <Text style={styles.choiceText}>{choice}</Text>
             </View>
@@ -69,12 +77,16 @@ export default function App() {
         show={showAlert}
         title="Total de la Cotización"
         message={alertMessage}
-        closeOnTouchOutside
+        closeOnTouchOutside={false}
         closeOnHardwareBackPress={false}
+        // showCancelButton
         showConfirmButton
+        // cancelText="Agendar cita"
         confirmText="Aceptar"
         confirmButtonColor="#000"
+        cancelButtonColor="#000"
         onConfirmPressed={() => setShowAlert(false)}
+        onCancelPressed={handleAgendar}
       />
     </ScrollView>
   );
