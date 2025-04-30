@@ -5,17 +5,11 @@ import 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-// Importar la pantalla de perfil
+// Importar pantallas reales
 import PerfilScreen from './administrador/perfil';
+import CitasScreen from './administrador/agenda'; // 👈 Asegúrate que la ruta sea correcta
 
 const Tab = createBottomTabNavigator();
-
-// Pantalla genérica para tabs vacías
-const PlaceholderScreen = ({ route }) => (
-  <View style={styles.container}>
-    <Text style={styles.title}>Estás en {route.name}</Text>
-  </View>
-);
 
 export default function Administrador() {
   return (
@@ -29,14 +23,12 @@ export default function Administrador() {
           tabBarIcon: ({ color, size }) => {
             let iconName;
             if (route.name === 'Agenda') iconName = 'event';
-            else if (route.name === 'Servicios') iconName = 'list';
             else if (route.name === 'Perfil') iconName = 'person';
             return <Icon name={iconName} size={size} color={color} />;
           },
         })}
       >
-        <Tab.Screen name="Agenda" component={PlaceholderScreen} />
-        <Tab.Screen name="Servicios" component={PlaceholderScreen} />
+        <Tab.Screen name="Agenda" component={CitasScreen} />
         <Tab.Screen name="Perfil" component={PerfilScreen} />
       </Tab.Navigator>
     </SafeAreaProvider>

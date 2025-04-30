@@ -38,8 +38,8 @@ const generateTimeSlots = () => {
 export default function AppointmentScheduler() {
   const { width } = useWindowDimensions();
 
-const isWeb = Platform.OS === 'web';
-const isMobileWeb = isWeb && width <= 500;
+  const isWeb = Platform.OS === 'web';
+  const isMobileWeb = isWeb && width <= 500;
 
   const [date] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(date.toISOString().split('T')[0]);
@@ -80,9 +80,8 @@ const isMobileWeb = isWeb && width <= 500;
     const fecha = selectedDate;
     const hora = `${selectedTime}:00`;
 
-    const message = `Nombre: ${name}\nTeléfono: ${phone}\nCorreo: ${email}\nFecha: ${fecha}\nHora: ${selectedTime}${
-      isHomeAppointment ? `\nDirección: ${address}` : ''
-    }`;
+    const message = `Nombre: ${name}\nTeléfono: ${phone}\nCorreo: ${email}\nFecha: ${fecha}\nHora: ${selectedTime}${isHomeAppointment ? `\nDirección: ${address}` : ''
+      }`;
 
     setAlertMessage(message);
     setShowAlert(true);
@@ -103,18 +102,19 @@ const isMobileWeb = isWeb && width <= 500;
           correo: email,
           fecha,
           hora,
-          direccion: isHomeAppointment ? address : 'En consultorio',
+          direccion: isHomeAppointment ? address : 'En estudio',
           numero_celular: phone,
         },
       ]);
-    
+
       console.log('Resultado insert →', { data, error });
-    
+
       if (error) {
         console.error('❌ Error al guardar la cita:', error.message);
       } else {
         console.log('✅ Cita registrada correctamente en Supabase.');
-    
+
+        // 🔗 Enviar correo desde backend Flask
         // 🔗 Enviar correo desde backend Flask
         try {
           const response = await fetch('https://nails-backend-gric.onrender.com/send-email', {
@@ -130,14 +130,33 @@ const isMobileWeb = isWeb && width <= 500;
               isHomeAppointment,
             }),
           });
-          
-    
+
           const result = await response.json();
           console.log('📬 Correo enviado desde Flask:', result);
+
+          // 🔗 Enviar también WhatsApp después del correo
+          const responseWhatsapp = await fetch('https://nails-backend-gric.onrender.com/send-whatsapp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name,
+              phone,
+              email,
+              date: selectedDate,
+              time: selectedTime,
+              address,
+              isHomeAppointment,
+            }),
+          });
+
+          const resultWhatsapp = await responseWhatsapp.json();
+          console.log('💬 WhatsApp enviado desde Flask:', resultWhatsapp);
+
         } catch (flaskError) {
-          console.error('❌ Error al enviar correo con Flask:', flaskError);
+          console.error('❌ Error al enviar correo o WhatsApp con Flask:', flaskError);
         }
-    
+
+
         // Reiniciar formulario
         setFormData({ name: '', phone: '', email: '', address: '' });
         setSelectedTime(null);
@@ -146,25 +165,25 @@ const isMobileWeb = isWeb && width <= 500;
     } catch (err) {
       console.error('❗ Error inesperado al guardar cita:', err.message);
     }
-  };    
+  };
 
   return (
     <ScrollView
-  style={styles.container}
-  contentContainerStyle={{
-    flexGrow: 1,
-    paddingBottom: 32,
-    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
-  }}
->
+      style={styles.container}
+      contentContainerStyle={{
+        flexGrow: 1,
+        paddingBottom: 32,
+        alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
+      }}
+    >
 
-<View
-  style={[
-    styles.wrapper,
-    isMobileWeb && { width: '60%' },        // ✅ ancho amplio en web móvil
-    isWeb && !isMobileWeb && { width: '60%' } // ✅ más angosto en escritorio web
-  ]}
->
+      <View
+        style={[
+          styles.wrapper,
+          isMobileWeb && { width: '60%' },        // ✅ ancho amplio en web móvil
+          isWeb && !isMobileWeb && { width: '60%' } // ✅ más angosto en escritorio web
+        ]}
+      >
 
         <Text style={styles.title}>Agendar cita</Text>
 

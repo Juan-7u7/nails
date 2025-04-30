@@ -21,6 +21,7 @@ import { createClient } from '@supabase/supabase-js';
 import { supabase } from './supabaseclient'; // Ajusta la ruta si es necesario
 // import { supabase } from '../nails/supabaseclient';
 import { Alert } from 'react-native';
+import CitasPreviewScreen from './paginas/administrador/CitasPreviewScreen';
 
 
 
@@ -53,6 +54,11 @@ export default function App() {
             component={DiseñosScreen}
             options={{ title: 'Diseños' }}
           />
+          <Stack.Screen
+  name="VistaPreviaCitas"
+  component={CitasPreviewScreen}
+  options={{ title: 'Vista previa PDF' }}
+/>
           <Stack.Screen
   name="Administrador"
   component={Administrador}
