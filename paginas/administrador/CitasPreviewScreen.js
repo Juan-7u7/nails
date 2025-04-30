@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, StyleSheet, Button, Alert } from 'react-native';
+import { View, StyleSheet, Button, Alert, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -21,7 +21,7 @@ const CitasPreviewScreen = ({ route }) => {
 
   const compartirPDF = async () => {
     if (!pdfUriRef.current) {
-      await generarPDF(); // generar si aún no existe
+      await generarPDF();
     }
 
     try {
@@ -36,13 +36,32 @@ const CitasPreviewScreen = ({ route }) => {
     }
   };
 
+  const imprimirEnWeb = () => {
+    const newWindow = window.open();
+    newWindow.document.write(htmlContent);
+    newWindow.document.close();
+    newWindow.focus();
+    newWindow.print();
+  };
+
   return (
     <View style={styles.container}>
-      <WebView originWhitelist={['*']} source={{ html: htmlContent }} style={{ flex: 1 }} />
+      {/* Botones arriba */}
       <View style={styles.buttonContainer}>
-        <Button title="Guardar PDF" onPress={generarPDF} color="#111" />
-        <View style={{ height: 10 }} />
-        <Button title="Compartir PDF" onPress={compartirPDF} color="#444" />
+        {Platform.OS !== 'web' ? (
+          <>
+            <Button title="Guardar PDF" onPress={generarPDF} color="#111" />
+            <View style={{ height: 10 }} />
+            <Button title="Compartir PDF" onPress={compartirPDF} color="#444" />
+          </>
+        ) : (
+          <Button title="Imprimir desde el navegador" onPress={imprimirEnWeb} color="#007AFF" />
+        )}
+      </View>
+
+      {/* WebView o HTML en móvil */}
+      <View style={{ flex: 1 }}>
+        <WebView originWhitelist={['*']} source={{ html: htmlContent }} />
       </View>
     </View>
   );
@@ -51,10 +70,13 @@ const CitasPreviewScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'white',
   },
   buttonContainer: {
     padding: 16,
     backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
   },
 });
 
