@@ -1,196 +1,167 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Modal,
+  TextInput,
+  FlatList,
+  Dimensions,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 
-const PerfilScreen = () => {
-  const [editMode, setEditMode] = useState(false);
-  const [profile, setProfile] = useState({
-    name: 'Nails Studio',
-    photo: 'https://via.placeholder.com/150',
-  });
+const IMAGE_URL = 'https://nailsco.es/wp-content/uploads/2024/12/gel-y-acrilico-realizadas9.jpg';
+const screenWidth = Dimensions.get('window').width;
+const spacing = 4;
+const numColumns = 3;
+const imageSize = (screenWidth - spacing * (numColumns + 1)) / numColumns;
 
-  const [highlights, setHighlights] = useState([
-    { id: '1', title: 'Gelish', image: 'https://via.placeholder.com/100' },
-    { id: '2', title: 'Pedicura', image: 'https://via.placeholder.com/100' },
-    { id: '3', title: 'Manicura', image: 'https://via.placeholder.com/100' },
-  ]);
+const estilosUnas = [
+  'Uñas acrílicas',
+  'Francesa clásica',
+  'Gelish pastel',
+  'Manicura rusa',
+  'Diseño con piedras',
+  'Estilo animal print',
+  'Baby boomer',
+  'Uñas neón',
+  'Diseño minimalista',
+  'Uñas mate',
+  'Efecto mármol',
+  'Francesa invertida',
+];
 
-  const [selectedHighlight, setSelectedHighlight] = useState(null);
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+const pruebasIniciales = estilosUnas.map((desc, index) => ({
+  id: (index + 1).toString(),
+  image: { uri: IMAGE_URL },
+  description: desc,
+}));
+
+export default function PerfilMaqueta() {
   const navigation = useNavigation();
+  const [pruebas, setPruebas] = useState(pruebasIniciales);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [descripcion, setDescripcion] = useState('');
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  const handleEditToggle = () => setEditMode(!editMode);
-
-  const handleChange = (field, value) => setProfile({ ...profile, [field]: value });
-
-  const updateHighlightTitle = (id, newTitle) => {
-    setHighlights((prev) =>
-      prev.map((highlight) => (highlight.id === id ? { ...highlight, title: newTitle } : highlight))
-    );
-  };
-
-  const addHighlight = () => {
-    const newHighlight = {
-      id: (highlights.length + 1).toString(),
-      title: `Nuevo ${highlights.length + 1}`,
-      image: 'https://via.placeholder.com/100',
-    };
-    setHighlights([...highlights, newHighlight]);
-  };
-
-  const handleLongPress = (highlight) => {
-    setSelectedHighlight(highlight);
+  const handleAgregar = () => {
+    setSelectedItem(null);
+    setDescripcion('');
     setModalVisible(true);
   };
 
-  const deleteHighlight = () => {
-    setHighlights((prev) => prev.filter((highlight) => highlight.id !== selectedHighlight.id));
+  const handleGuardar = () => {
+    if (selectedItem) {
+      setPruebas((prev) =>
+        prev.map((item) =>
+          item.id === selectedItem.id ? { ...item, description: descripcion } : item
+        )
+      );
+    } else {
+      const nuevaPrueba = {
+        id: Date.now().toString(),
+        image: { uri: IMAGE_URL },
+        description: descripcion || 'Sin descripción',
+      };
+      setPruebas((prev) => [...prev, nuevaPrueba]);
+    }
     setModalVisible(false);
-    setSelectedHighlight(null);
+    setDescripcion('');
+    setSelectedItem(null);
+  };
+
+  const handleItemPress = (item) => {
+    setSelectedItem(item);
+    setDescripcion(item.description);
+    setModalVisible(true);
   };
 
   const handleLogout = () => {
     setLogoutModalVisible(false);
-    navigation.navigate('Home'); // Cambia 'Home' al nombre de tu pantalla principal
+    navigation.navigate('Home'); // Cambia esto al nombre real de tu pantalla inicial
   };
-  
 
   return (
     <View style={styles.container}>
-      {/* Botón de Logout */}
+      {/* Botón Logout */}
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={() => setLogoutModalVisible(true)}
       >
-        <Icon name="logout" size={24} color="white" />
+        <Icon name="logout" size={22} color="white" />
       </TouchableOpacity>
 
-      {/* Botón de edición */}
-      <TouchableOpacity style={styles.editButton} onPress={handleEditToggle}>
-        <Icon name="edit" size={24} color="black" />
+      <Image source={require('../../assets/perfil.png')} style={styles.profileImage} />
+      <Text style={styles.title}>Nails Studio</Text>
+
+      <TouchableOpacity style={styles.addButton} onPress={handleAgregar}>
+        <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
 
-      {/* Contenedor de la foto */}
-      <View style={styles.photoContainer}>
-        <Image source={{ uri: profile.photo }} style={styles.photo} />
-        {editMode && (
-          <TouchableOpacity
-            style={styles.changePhotoButton}
-            onPress={() => alert('Cambiar foto (aquí puedes agregar lógica para subir foto)')}
-          >
-            <Text style={styles.changePhotoText}>Cambiar foto</Text>
+      <FlatList
+        data={pruebas}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.gallery}
+        numColumns={numColumns}
+        renderItem={({ item }) => (
+          <TouchableOpacity onPress={() => handleItemPress(item)} style={styles.gridItem}>
+            <Image source={item.image} style={styles.gridImage} />
           </TouchableOpacity>
         )}
-      </View>
+      />
 
-      {/* Nombre del estudio */}
-      {editMode ? (
-        <TextInput
-          style={styles.nameInput}
-          value={profile.name}
-          onChangeText={(text) => handleChange('name', text)}
-          placeholder="Nombre del estudio"
-          placeholderTextColor="#888"
-        />
-      ) : (
-        <Text style={styles.nameText}>{profile.name}</Text>
-      )}
-
-      {/* Cifras debajo del nombre */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statsBox}>
-          <Text style={styles.statsNumber}>1200</Text>
-          <Text style={styles.statsLabel}>Visitas</Text>
-        </View>
-        <View style={styles.statsBox}>
-          <Text style={styles.statsNumber}>850</Text>
-          <Text style={styles.statsLabel}>Atendidas</Text>
-        </View>
-        <View style={styles.statsBox}>
-          <Text style={styles.statsNumber}>4.8</Text>
-          <Text style={styles.statsLabel}>Valoración</Text>
-        </View>
-      </View>
-
-      {/* Highlights */}
-      <View style={styles.highlightsContainer}>
-        <FlatList
-          data={highlights}
-          keyExtractor={(item) => item.id}
-          horizontal
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onLongPress={() => handleLongPress(item)}
-              delayLongPress={300}
-            >
-              <View style={styles.highlight}>
-                <Image source={{ uri: item.image }} style={styles.highlightImage} />
-                {editMode ? (
-                  <TextInput
-                    style={styles.highlightInput}
-                    value={item.title}
-                    onChangeText={(text) => updateHighlightTitle(item.id, text)}
-                  />
-                ) : (
-                  <Text style={styles.highlightText}>{item.title}</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-        {editMode && (
-          <TouchableOpacity style={styles.addHighlightButton} onPress={addHighlight}>
-            <Icon name="add" size={30} color="white" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Modal para eliminar highlights */}
-      <Modal
-        transparent
-        visible={isModalVisible}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
+      {/* Modal de agregar/editar prueba */}
+      <Modal transparent visible={modalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalText}>
-              ¿Deseas eliminar el highlight{' '}
-              <Text style={{ fontWeight: 'bold' }}>{selectedHighlight?.title}</Text>?
+            <Text style={styles.modalTitle}>
+              {selectedItem ? 'Editar prueba' : 'Agregar prueba'}
             </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButton} onPress={deleteHighlight}>
-                <Text style={styles.modalButtonText}>Eliminar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: 'gray' }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
+            <Image source={{ uri: IMAGE_URL }} style={[styles.modalImage]} />
+            <TextInput
+              style={styles.input}
+              placeholder="Descripción"
+              placeholderTextColor="#888"
+              value={descripcion}
+              onChangeText={setDescripcion}
+            />
+            <TouchableOpacity style={styles.modalButton} onPress={handleGuardar}>
+              <Text style={styles.modalButtonText}>Guardar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setModalVisible(false);
+                setDescripcion('');
+                setSelectedItem(null);
+              }}
+              style={[styles.modalButton, { backgroundColor: '#888' }]}
+            >
+              <Text style={styles.modalButtonText}>Cancelar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Modal para Logout */}
+      {/* Modal de logout */}
       <Modal
         transparent
         visible={logoutModalVisible}
         animationType="slide"
         onRequestClose={() => setLogoutModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalText}>¿Deseas cerrar sesión?</Text>
-            <View style={styles.modalButtons}>
+            <Text style={styles.modalTitle}>¿Deseas cerrar sesión?</Text>
+            <View style={styles.modalButtonsRow}>
               <TouchableOpacity style={styles.modalButton} onPress={handleLogout}>
                 <Text style={styles.modalButtonText}>Sí</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: 'gray' }]}
+                style={[styles.modalButton, { backgroundColor: '#888' }]}
                 onPress={() => setLogoutModalVisible(false)}
               >
                 <Text style={styles.modalButtonText}>No</Text>
@@ -201,7 +172,7 @@ const PerfilScreen = () => {
       </Modal>
     </View>
   );
-};
+}
 
 // Estilos
 const styles = StyleSheet.create({
@@ -209,7 +180,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
     alignItems: 'center',
-    padding: 20,
+    paddingTop: 40,
   },
   logoutButton: {
     position: 'absolute',
@@ -218,114 +189,104 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
     padding: 10,
     borderRadius: 8,
-    elevation: 3,
+    zIndex: 10,
   },
-  editButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
+  profileImage: {
+    width: screenWidth * 0.4,
+    height: screenWidth * 0.4,
+    borderRadius: screenWidth * 0.2,
+    borderWidth: 2,
+    borderColor: 'black',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'black',
+    marginTop: 12,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  addButton: {
+    marginVertical: 20,
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     backgroundColor: 'white',
-    padding: 10,
+  },
+  addButtonText: {
+    color: 'black',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  gallery: {
+    paddingBottom: 100,
+    paddingHorizontal: spacing,
+  },
+  gridItem: {
+    width: imageSize,
+    height: imageSize,
+    margin: spacing,
+  },
+  gridImage: {
+    width: '100%',
+    height: '100%',
     borderRadius: 8,
-    elevation: 3,
-  },
-  photoContainer: {
-    marginTop: 60,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  photo: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'black',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20,
-    width: '100%',
-  },
-  statsBox: {
-    alignItems: 'center',
-  },
-  highlightsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-    width: '100%',
-    justifyContent: 'center',
-  },
-  highlight: {
-    alignItems: 'center',
-    marginHorizontal: 10,
-  },
-  highlightImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 2,
-    borderColor: 'black',
-  },
-  highlightText: {
-    marginTop: 5,
-    fontSize: 12,
-    color: 'black',
-    textAlign: 'center',
-  },
-  highlightInput: {
-    marginTop: 5,
-    fontSize: 12,
-    color: 'black',
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
-    textAlign: 'center',
-  },
-  addHighlightButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: 'black',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 10,
-  },
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalContent: {
-    width: '80%',
     backgroundColor: 'white',
+    width: '85%',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
   },
-  modalText: {
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
     color: 'black',
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  modalImage: {
+    width: screenWidth * 0.6,
+    height: screenWidth * 0.6,
+    borderRadius: 12,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: 'black',
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderColor: 'black',
     width: '100%',
+    marginBottom: 20,
+    fontSize: 14,
+    color: 'black',
+    paddingVertical: 6,
   },
   modalButton: {
     backgroundColor: 'black',
-    padding: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
-    alignItems: 'center',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    marginTop: 10,
   },
   modalButtonText: {
     color: 'white',
     fontWeight: 'bold',
   },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 10,
+  },
 });
-
-export default PerfilScreen;

@@ -1,18 +1,37 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Dimensions, Image, ActivityIndicator } from "react-native";
+import React, { useRef, useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  Dimensions,
+  Image,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { captureRef } from "react-native-view-shot";
+import * as MediaLibrary from "expo-media-library";
 
 const CardWithVerticalContainers = () => {
   const [inputText, setInputText] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [permissionResponse, requestPermission] = MediaLibrary.usePermissions();
+  const cardRef = useRef();
+
+  useEffect(() => {
+    if (!permissionResponse?.granted) {
+      requestPermission();
+    }
+  }, []);
 
   const handleSend = async () => {
     if (inputText.trim()) {
       try {
         setLoading(true);
 
-        // Detectamos si el usuario escribió más de un color
         const multipleColors = inputText.includes(",") || inputText.toLowerCase().includes(" y ");
 
         const enhancedPrompt = multipleColors
@@ -51,42 +70,71 @@ const CardWithVerticalContainers = () => {
     }
   };
 
+  const handleCaptureAndSave = async () => {
+    if (!permissionResponse?.granted) {
+      const { granted } = await requestPermission();
+      if (!granted) {
+        Alert.alert('Permiso requerido', 'No se puede guardar sin permiso.');
+        return;
+      }
+    }
+
+    try {
+      const uri = await captureRef(cardRef, {
+        format: 'jpg',
+        quality: 0.9,
+      });
+
+      const asset = await MediaLibrary.createAssetAsync(uri);
+      await MediaLibrary.createAlbumAsync('NailDesigns', asset, false);
+      Alert.alert('Captura guardada', 'Se guardó la imagen en tu galería.');
+    } catch (error) {
+      console.error('Error capturando imagen:', error);
+      Alert.alert('Error', 'No se pudo capturar la tarjeta.');
+    }
+  };
+
   return (
-    <View style={styles.card}>
-      {/* Imagen generada */}
-      <View style={[styles.innerContainer, { flex: 0.6, padding: 0 }]}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#000" />
-        ) : imageUri ? (
-          <Image
-            source={{ uri: imageUri }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        ) : (
-          <Text style={styles.text}>No hay imagen aún</Text>
-        )}
-      </View>
+    <View style={styles.wrapper}>
+      <View style={styles.card} ref={cardRef}>
+        {/* Imagen generada */}
+        <View style={[styles.innerContainer, { flex: 0.6, padding: 0 }]}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#000" />
+          ) : imageUri ? (
+            <Image
+              source={{ uri: imageUri }}
+              style={styles.image}
+              resizeMode="contain"
+            />
+          ) : (
+            <Text style={styles.text}>No hay imagen aún</Text>
+          )}
+        </View>
 
-      {/* Input para escribir prompt */}
-      <View style={[styles.innerContainer, { flex: 0.4 }]}>
-        <Text style={styles.text}>Generador de Ideas</Text>
+        {/* Input para escribir prompt */}
+        <View style={[styles.innerContainer, { flex: 0.4 }]}>
+          <Text style={styles.text}>Generador de Ideas</Text>
 
-        {/* Disclaimer */}
-        {/* <Text style={styles.disclaimer}>
-          Ejemplo: "Degradado azul y rojo" o "Rosa pastel"
-        </Text> */}
+          <View style={styles.inputContainer}>
+            {/* Botón cámara a la izquierda */}
+            <TouchableOpacity style={styles.captureButton} onPress={handleCaptureAndSave}>
+              <MaterialIcons name="photo-camera" size={24} color="white" />
+            </TouchableOpacity>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Escribe tu idea..."
-          />
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-            <MaterialIcons name="send" size={24} color="white" />
-          </TouchableOpacity>
+            {/* Campo de texto */}
+            <TextInput
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Escribe tu idea..."
+            />
+
+            {/* Botón enviar */}
+            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+              <MaterialIcons name="send" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>
@@ -94,6 +142,13 @@ const CardWithVerticalContainers = () => {
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 50,
+    backgroundColor: '#f7f7f7',
+  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 10,
@@ -104,9 +159,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     width: Dimensions.get("window").width * 0.9,
-    height: Dimensions.get("window").height * 0.9,
+    height: Dimensions.get("window").height * 0.85,
     alignSelf: "center",
-    marginVertical: 20,
     justifyContent: "flex-start",
   },
   innerContainer: {
@@ -128,6 +182,16 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginTop: 20,
+  },
+  captureButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    shadowColor: '#000',
   },
   input: {
     flex: 1,
