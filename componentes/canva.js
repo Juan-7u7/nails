@@ -153,12 +153,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
+    paddingHorizontal: 10, // agregado para dar más espacio horizontal
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    width: Dimensions.get("window").width * 0.9,
+    width: Dimensions.get("window").width * 0.95, // antes 0.9
     height: Dimensions.get("window").height * 0.85,
     alignSelf: "center",
     justifyContent: "flex-start",
@@ -179,8 +180,10 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    width: '100%',
     alignItems: 'center',
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 5, // nuevo
     marginTop: 20,
   },
   captureButton: {
@@ -201,8 +204,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 10,
-    marginRight: 10,
-    shadowColor: '#000',
+    marginRight: 6, // reducido de 10 a 6
   },
   sendButton: {
     width: 50,
@@ -211,7 +213,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    flexShrink: 0, // nuevo
   },
   image: {
     width: '100%',
@@ -219,5 +221,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 });
+
 
 export default CardWithVerticalContainers;
