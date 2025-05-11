@@ -8,13 +8,15 @@ import {
   TextInput,
   FlatList,
   ScrollView,
-  Share,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
+import { Linking } from 'react-native';
+
 
 export default function ServiciosAdmin() {
   const navigation = useNavigation();
@@ -65,13 +67,23 @@ export default function ServiciosAdmin() {
   };
 
   const compartirTicket = async () => {
-    try {
-      const uri = await viewShotRef.current.capture();
-      const newPath = FileSystem.documentDirectory + 'ticket.jpg';
-      await FileSystem.moveAsync({ from: uri, to: newPath });
-      await Sharing.shareAsync(newPath);
-    } catch (error) {
-      console.error('Error al capturar o compartir:', error);
+    if (Platform.OS === 'web') {
+      const conceptos = servicios.filter(item => seleccionados.includes(item.id));
+      const texto = `Nota de Servicios\n\n${conceptos
+        .map(i => `• ${i.nombre}: $${i.costo.toFixed(2)}`)
+        .join('\n')}\n\nTotal: $${total.toFixed(2)}\nVisítanos: https://nailspage.netlify.app`;
+
+      const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+      Linking.openURL(url);
+    } else {
+      try {
+        const uri = await viewShotRef.current.capture();
+        const newPath = FileSystem.documentDirectory + 'ticket.jpg';
+        await FileSystem.moveAsync({ from: uri, to: newPath });
+        await Sharing.shareAsync(newPath);
+      } catch (error) {
+        console.error('Error al capturar o compartir:', error);
+      }
     }
   };
 
