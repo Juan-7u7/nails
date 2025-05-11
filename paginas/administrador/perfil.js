@@ -1,158 +1,148 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Modal,
   TextInput,
   FlatList,
-  Dimensions,
+  ScrollView,
+  Share,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
-const IMAGE_URL = 'https://nailsco.es/wp-content/uploads/2024/12/gel-y-acrilico-realizadas9.jpg';
-const screenWidth = Dimensions.get('window').width;
-const spacing = 4;
-const numColumns = 3;
-const imageSize = (screenWidth - spacing * (numColumns + 1)) / numColumns;
-
-const estilosUnas = [
-  'Uñas acrílicas',
-  'Francesa clásica',
-  'Gelish pastel',
-  'Manicura rusa',
-  'Diseño con piedras',
-  'Estilo animal print',
-  'Baby boomer',
-  'Uñas neón',
-  'Diseño minimalista',
-  'Uñas mate',
-  'Efecto mármol',
-  'Francesa invertida',
-];
-
-const pruebasIniciales = estilosUnas.map((desc, index) => ({
-  id: (index + 1).toString(),
-  image: { uri: IMAGE_URL },
-  description: desc,
-}));
-
-export default function PerfilMaqueta() {
+export default function ServiciosAdmin() {
   const navigation = useNavigation();
-  const [pruebas, setPruebas] = useState(pruebasIniciales);
-  const [modalVisible, setModalVisible] = useState(false);
+  const viewShotRef = useRef();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const [descripcion, setDescripcion] = useState('');
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [servicios, setServicios] = useState([]);
+  const [nuevoServicio, setNuevoServicio] = useState('');
+  const [nuevoCosto, setNuevoCosto] = useState('');
+  const [seleccionados, setSeleccionados] = useState([]);
+  const [mostrarTicket, setMostrarTicket] = useState(false);
 
-  const handleAgregar = () => {
-    setSelectedItem(null);
-    setDescripcion('');
-    setModalVisible(true);
-  };
-
-  const handleGuardar = () => {
-    if (selectedItem) {
-      setPruebas((prev) =>
-        prev.map((item) =>
-          item.id === selectedItem.id ? { ...item, description: descripcion } : item
-        )
-      );
-    } else {
-      const nuevaPrueba = {
+  const agregarServicio = () => {
+    if (nuevoServicio && nuevoCosto) {
+      const nuevo = {
         id: Date.now().toString(),
-        image: { uri: IMAGE_URL },
-        description: descripcion || 'Sin descripción',
+        nombre: nuevoServicio,
+        costo: parseFloat(nuevoCosto),
       };
-      setPruebas((prev) => [...prev, nuevaPrueba]);
+      const actualizados = [...servicios, nuevo];
+      setServicios(actualizados);
+      setNuevoServicio('');
+      setNuevoCosto('');
     }
-    setModalVisible(false);
-    setDescripcion('');
-    setSelectedItem(null);
   };
 
-  const handleItemPress = (item) => {
-    setSelectedItem(item);
-    setDescripcion(item.description);
-    setModalVisible(true);
+  const toggleSeleccionado = (item) => {
+    if (seleccionados.includes(item.id)) {
+      setSeleccionados(seleccionados.filter(id => id !== item.id));
+    } else {
+      setSeleccionados([...seleccionados, item.id]);
+    }
   };
+
+  const total = servicios
+    .filter(item => seleccionados.includes(item.id))
+    .reduce((sum, item) => sum + item.costo, 0);
 
   const handleLogout = () => {
     setLogoutModalVisible(false);
-    navigation.navigate('Home'); // Cambia esto al nombre real de tu pantalla inicial
+    setServicios([]);
+    setSeleccionados([]);
+    setMostrarTicket(false);
+    navigation.navigate('Home');
+  };
+
+  const generarTicket = () => {
+    setMostrarTicket(true);
+  };
+
+  const compartirTicket = async () => {
+    try {
+      const uri = await viewShotRef.current.capture();
+      const newPath = FileSystem.documentDirectory + 'ticket.jpg';
+      await FileSystem.moveAsync({ from: uri, to: newPath });
+      await Sharing.shareAsync(newPath);
+    } catch (error) {
+      console.error('Error al capturar o compartir:', error);
+    }
   };
 
   return (
-    <View style={styles.container}>
-      {/* Botón Logout */}
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={() => setLogoutModalVisible(true)}
-      >
-        <Icon name="logout" size={22} color="white" />
+    <ScrollView contentContainerStyle={styles.container}>
+      <TouchableOpacity style={styles.logoutButton} onPress={() => setLogoutModalVisible(true)}>
+        <Icon name="logout" size={20} color="white" />
       </TouchableOpacity>
 
-      <Image source={require('../../assets/perfil.png')} style={styles.profileImage} />
-      <Text style={styles.title}>Nails Studio</Text>
+      <Text style={styles.title}>Servicios</Text>
 
-      <TouchableOpacity style={styles.addButton} onPress={handleAgregar}>
-        <Text style={styles.addButtonText}>+</Text>
+      <TextInput
+        placeholder="Nombre del servicio"
+        value={nuevoServicio}
+        onChangeText={setNuevoServicio}
+        style={styles.input}
+        placeholderTextColor="#aaa"
+      />
+      <TextInput
+        placeholder="Costo"
+        value={nuevoCosto}
+        onChangeText={setNuevoCosto}
+        keyboardType="numeric"
+        style={styles.input}
+        placeholderTextColor="#aaa"
+      />
+
+      <TouchableOpacity style={styles.addButton} onPress={agregarServicio}>
+        <Text style={styles.addButtonText}>Agregar Servicio</Text>
       </TouchableOpacity>
 
       <FlatList
-        data={pruebas}
+        data={servicios}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.gallery}
-        numColumns={numColumns}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleItemPress(item)} style={styles.gridItem}>
-            <Image source={item.image} style={styles.gridImage} />
+          <TouchableOpacity
+            onPress={() => toggleSeleccionado(item)}
+            style={[styles.serviceItem, seleccionados.includes(item.id) && styles.selectedItem]}
+          >
+            <Text style={styles.serviceText}>{item.nombre}</Text>
+            <Text style={styles.serviceText}>${item.costo.toFixed(2)}</Text>
           </TouchableOpacity>
         )}
+        style={styles.serviceList}
       />
 
-      {/* Modal de agregar/editar prueba */}
-      <Modal transparent visible={modalVisible} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {selectedItem ? 'Editar prueba' : 'Agregar prueba'}
-            </Text>
-            <Image source={{ uri: IMAGE_URL }} style={[styles.modalImage]} />
-            <TextInput
-              style={styles.input}
-              placeholder="Descripción"
-              placeholderTextColor="#888"
-              value={descripcion}
-              onChangeText={setDescripcion}
-            />
-            <TouchableOpacity style={styles.modalButton} onPress={handleGuardar}>
-              <Text style={styles.modalButtonText}>Guardar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setModalVisible(false);
-                setDescripcion('');
-                setSelectedItem(null);
-              }}
-              style={[styles.modalButton, { backgroundColor: '#888' }]}
-            >
-              <Text style={styles.modalButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <TouchableOpacity style={styles.ticketButton} onPress={generarTicket}>
+        <Text style={styles.ticketButtonText}>Generar Ticket</Text>
+      </TouchableOpacity>
 
-      {/* Modal de logout */}
-      <Modal
-        transparent
-        visible={logoutModalVisible}
-        animationType="slide"
-        onRequestClose={() => setLogoutModalVisible(false)}
-      >
+      {mostrarTicket && (
+        <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.9 }} style={styles.ticketBox}>
+          <Text style={styles.ticketTitle}>Nota de Servicios</Text>
+          {servicios.filter(item => seleccionados.includes(item.id)).map(item => (
+            <View key={item.id} style={styles.ticketItem}>
+              <Text style={styles.ticketText}>{item.nombre}</Text>
+              <Text style={styles.ticketText}>${item.costo.toFixed(2)}</Text>
+            </View>
+          ))}
+          <Text style={styles.ticketTotal}>Total: ${total.toFixed(2)}</Text>
+          <Text style={styles.footerText}>Visítanos: https://nailspage.netlify.app/</Text>
+        </ViewShot>
+      )}
+
+      {mostrarTicket && (
+        <TouchableOpacity style={styles.shareButton} onPress={compartirTicket}>
+          <Text style={styles.shareButtonText}>Compartir por WhatsApp</Text>
+        </TouchableOpacity>
+      )}
+
+      <Modal transparent visible={logoutModalVisible} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>¿Deseas cerrar sesión?</Text>
@@ -161,7 +151,7 @@ export default function PerfilMaqueta() {
                 <Text style={styles.modalButtonText}>Sí</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: '#888' }]}
+                style={[styles.modalButton, styles.cancelButton]}
                 onPress={() => setLogoutModalVisible(false)}
               >
                 <Text style={styles.modalButtonText}>No</Text>
@@ -170,71 +160,126 @@ export default function PerfilMaqueta() {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
-// Estilos
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    paddingTop: 40,
+    padding: 20,
+    backgroundColor: '#fff',
+    paddingBottom: 60,
   },
   logoutButton: {
     position: 'absolute',
     top: 20,
     left: 20,
-    backgroundColor: 'black',
-    padding: 10,
-    borderRadius: 8,
-    zIndex: 10,
-  },
-  profileImage: {
-    width: screenWidth * 0.4,
-    height: screenWidth * 0.4,
-    borderRadius: screenWidth * 0.2,
-    borderWidth: 2,
-    borderColor: 'black',
+    backgroundColor: '#111',
+    padding: 8,
+    borderRadius: 10,
+    zIndex: 1,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '600',
-    color: 'black',
-    marginTop: 12,
-    marginBottom: 8,
+    marginBottom: 20,
+    color: '#222',
     textAlign: 'center',
   },
+  input: {
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 15,
+    fontSize: 16,
+    paddingVertical: 6,
+    color: '#222',
+  },
   addButton: {
-    marginVertical: 20,
-    borderWidth: 1,
-    borderColor: 'black',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    backgroundColor: 'white',
+    backgroundColor: '#222',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 20,
   },
   addButtonText: {
-    color: 'black',
-    fontSize: 22,
-    fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  gallery: {
-    paddingBottom: 100,
-    paddingHorizontal: spacing,
+  serviceList: {
+    marginBottom: 20,
   },
-  gridItem: {
-    width: imageSize,
-    height: imageSize,
-    margin: spacing,
+  serviceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  gridImage: {
-    width: '100%',
-    height: '100%',
+  selectedItem: {
+    backgroundColor: '#e0f7fa',
+  },
+  serviceText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  ticketButton: {
+    backgroundColor: '#00695c',
+    paddingVertical: 12,
     borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  ticketButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  ticketBox: {
+    padding: 20,
     borderWidth: 1,
-    borderColor: 'black',
+    borderColor: '#ccc',
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    marginBottom: 10,
+  },
+  ticketTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  ticketItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  ticketText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  ticketTotal: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginTop: 10,
+    textAlign: 'right',
+  },
+  footerText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  shareButton: {
+    backgroundColor: '#25D366',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
@@ -255,29 +300,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: 'black',
   },
-  modalImage: {
-    width: screenWidth * 0.6,
-    height: screenWidth * 0.6,
-    borderRadius: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: 'black',
-  },
-  input: {
-    borderBottomWidth: 1,
-    borderColor: 'black',
-    width: '100%',
-    marginBottom: 20,
-    fontSize: 14,
-    color: 'black',
-    paddingVertical: 6,
-  },
   modalButton: {
     backgroundColor: 'black',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 30,
     marginTop: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#888',
   },
   modalButtonText: {
     color: 'white',
