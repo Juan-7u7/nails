@@ -178,7 +178,7 @@ function HomeScreen({ navigation }) {
         colors={['#333333', 'transparent']}
         style={styles.header}
       >
-        <Text style={[styles.title,]}>Nails</Text>
+        <Text style={[styles.title,]}>NailPoint</Text>
       </LinearGradient>
 
       <ScrollView
@@ -186,15 +186,16 @@ function HomeScreen({ navigation }) {
         contentContainerStyle={styles.scrollViewContent}
       >
         <View style={styles.content}>
-          <Text style={styles.text}>Esta es una Aplicacion en la que podras tener los servicios mas completos a tu alcance.</Text>
+          <Text style={styles.text}>Esta es una aplicación en la que podrás tener los servicios más completos a tu alcance.</Text>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Bienvenida</Text>
-            <Text style={styles.cardText}>Sientete comoda en explorar cada uno de nuestros apartados y disfrutar de nuestros servicios.</Text>
+            <Text style={styles.cardTitle}>BIENVENIDA</Text>
+            <Text style={styles.cardText}>Siéntase cómoda de explorar cada uno de nuestros apartados y disfrutar de nuestros mejores servicios y atención.</Text>
           </View>
 
           <View style={styles.transparentContainer}>
-            <Text style={styles.transparentText}>Aqui encontraras nuestros principales canales para servicios o administracion.</Text>
+            <Text style={styles.transparentText}>Aquí encontraras nuestros principales canales para servicios o administración.
+                                                  Agenda citas, cotiza tus diseños de manera rápida y crea tu propio estilo.</Text>
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={handleServicesClick}>
@@ -249,7 +250,7 @@ function HomeScreen({ navigation }) {
 
             {showServices && (
               <View style={styles.servicesContainer}>
-                <Text style={styles.servicesTitle}>Nuestros Servicios</Text>
+                <Text style={styles.servicesTitle}>NUESTROS SERVICIOS</Text>
                 <TouchableOpacity
                   style={styles.serviceButton}
                   onPress={() => handleServiceClick('AgendarCitas')}

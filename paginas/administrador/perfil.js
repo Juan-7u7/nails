@@ -179,7 +179,7 @@ export default function ServiciosAdmin() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#E8F9FF',
     paddingBottom: 60,
   },
   logoutButton: {

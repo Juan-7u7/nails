@@ -5,26 +5,44 @@ import AwesomeAlert from "react-native-awesome-alerts";
 import { useNavigation } from "@react-navigation/native";
 
 const options = [
-  { id: 1, question: "¿Qué forma de uñas prefieres?", choices: ["Cuadradas", "Ovaladas", "Almendra", "Stiletto"] },
-  { id: 2, question: "¿Qué largo de uñas prefieres?", choices: ["Cortas", "Medianas", "Largas"] },
-  { id: 3, question: "¿Quieres algún diseño especial?", choices: ["Francesa", "Decoración a mano", "Brillantes", "Sólido"] },
-  { id: 4, question: "¿Quieres esmalte normal o permanente?", choices: ["Normal", "Permanente"] },
+  { id: 1, question: "¿Se necesita retiro de algún servicio anterior?", choices: ["Si", "No"] },
+  {
+    id: 2,
+    question: "¿Qué servicio desea realizarse?",
+    choices: ["Gelish en manos", "Gelish en pies", "Acrilico", "Retoque de acrilico", "Baño de acrilico"],
+  },
+  {
+    id: 3,
+    question: "¿Qué largo de uña desea? (Si el servicio no será acrílico, omita esta parte)",
+    choices: ["No1", "No2", "No3", "No4", "No5"],
+  },
+  {
+    id: 4,
+    question: "¿Tiene algún diseño, efecto o decoración extra?",
+    choices: ["Frances", "Encapsulado", "Ojo de gato", "Stickers", "Diseño a mano alzada", "Piedras", "Marmoleado"],
+  },
 ];
 
 const prices = {
-  Cuadradas: 300,
-  Ovaladas: 320,
-  Almendra: 350,
-  Stiletto: 370,
-  Cortas: 0,
-  Medianas: 50,
-  Largas: 100,
-  Francesa: 100,
-  "Decoración a mano": 200,
-  Brillantes: 150,
-  Sólido: 0,
-  Normal: 0,
-  Permanente: 150,
+  Si: 70,
+  No: 0,
+  "Gelish en manos": 100,
+  "Gelish en pies": 100,
+  Acrilico: 200,
+  "Retoque de acrilico": 170,
+  "Baño de acrilico": 160,
+  No1: 0,
+  No2: 20,
+  No3: 40,
+  No4: 60,
+  No5: 80,
+  Frances: 20,
+  Encapsulado: 60,
+  "Ojo de gato": 30,
+  Stickers: 20,
+  "Diseño a mano alzada": 50,
+  Piedras: 10,
+  Marmoleado: 40,
 };
 
 export default function CotizarScreen() {
@@ -34,12 +52,48 @@ export default function CotizarScreen() {
 
   const navigation = useNavigation();
 
+  const isMultipleChoice = (id) => id === 4;
+
   const toggleOption = useCallback((questionId, choice) => {
-    setSelectedOptions((prev) => ({ ...prev, [questionId]: choice }));
+    setSelectedOptions((prev) => {
+      if (isMultipleChoice(questionId)) {
+        const current = prev[questionId] || [];
+        const updated = current.includes(choice)
+          ? current.filter((c) => c !== choice)
+          : [...current, choice];
+        return { ...prev, [questionId]: updated };
+      } else {
+        return { ...prev, [questionId]: choice };
+      }
+    });
   }, []);
 
   const calculateTotal = useMemo(() => {
-    return Object.values(selectedOptions).reduce((total, choice) => total + (prices[choice] || 0), 0);
+    let total = 0;
+
+    for (const [id, value] of Object.entries(selectedOptions)) {
+      const numId = parseInt(id);
+
+      // Si no se seleccionó un servicio acrílico, ignoramos la pregunta del largo
+      if (
+        numId === 3 &&
+        !["Acrilico", "Retoque de acrilico", "Baño de acrilico"].some((s) =>
+          Array.isArray(selectedOptions[2])
+            ? selectedOptions[2].includes(s)
+            : selectedOptions[2] === s
+        )
+      ) {
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        total += value.reduce((sum, v) => sum + (prices[v] || 0), 0);
+      } else {
+        total += prices[value] || 0;
+      }
+    }
+
+    return total;
   }, [selectedOptions]);
 
   const handleSubmit = () => {
@@ -49,7 +103,7 @@ export default function CotizarScreen() {
 
   const handleAgendar = () => {
     setShowAlert(false);
-    navigation.navigate("AgendarCitas"); // asegúrate que esta ruta exista en tu Stack.Navigator
+    navigation.navigate("AgendarCitas");
   };
 
   return (
@@ -61,9 +115,21 @@ export default function CotizarScreen() {
           {choices.map((choice) => (
             <View key={choice} style={styles.choiceContainer}>
               <Checkbox
-                value={selectedOptions[id] === choice}
+                value={
+                  isMultipleChoice(id)
+                    ? selectedOptions[id]?.includes(choice) || false
+                    : selectedOptions[id] === choice
+                }
                 onValueChange={() => toggleOption(id, choice)}
-                color={selectedOptions[id] === choice ? "#000" : "#aaa"}
+                color={
+                  isMultipleChoice(id)
+                    ? selectedOptions[id]?.includes(choice)
+                      ? "#000"
+                      : "#aaa"
+                    : selectedOptions[id] === choice
+                    ? "#000"
+                    : "#aaa"
+                }
               />
               <Text style={styles.choiceText}>{choice}</Text>
             </View>
@@ -79,14 +145,14 @@ export default function CotizarScreen() {
         message={alertMessage}
         closeOnTouchOutside={false}
         closeOnHardwareBackPress={false}
-        // showCancelButton
+//        showCancelButton
         showConfirmButton
         // cancelText="Agendar cita"
         confirmText="Aceptar"
         confirmButtonColor="#000"
-        cancelButtonColor="#000"
+        cancelButtonColor="#555"
         onConfirmPressed={() => setShowAlert(false)}
-        onCancelPressed={handleAgendar}
+//        onCancelPressed={handleAgendar}
       />
     </ScrollView>
   );
@@ -95,7 +161,7 @@ export default function CotizarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f7f3ff",
     padding: 20,
   },
   title: {
@@ -108,7 +174,7 @@ const styles = StyleSheet.create({
   questionContainer: {
     marginBottom: 20,
     padding: 10,
-    backgroundColor: "#F4F4F4",
+    backgroundColor: "#F9F9F9",
     borderRadius: 10,
   },
   question: {

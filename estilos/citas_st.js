@@ -3,7 +3,7 @@ import { StyleSheet, Platform } from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f7f3ff',
   },
   wrapper: {
     flexGrow: 1,
@@ -23,8 +23,15 @@ export const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 20,
+    
+    
   },
   input: {
+    color: 'black', // color del texto
+    backgroundColor: '#F9F9F9', // color de fondo
+    borderColor: '#ccc', // color del borde
+    borderWidth: 1,
+  padding: 10,
     height: 40,
     borderColor: '#ccc',
     borderWidth: 1,
@@ -77,7 +84,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#988dae',
   },
   buttonWeb: {
     cursor: 'pointer',

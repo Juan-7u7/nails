@@ -147,10 +147,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 50,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#f7f3ff',
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#F9F9F9",
     borderRadius: 10,
     padding: 20,
     paddingHorizontal: 10, // agregado para dar más espacio horizontal
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   innerContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "#f7f3ff",
     borderRadius: 8,
     padding: 20,
     marginVertical: 10,

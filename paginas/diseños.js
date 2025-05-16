@@ -13,7 +13,7 @@ const BlankPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // Fondo blanco
+    backgroundColor: '#BD83CE', // Fondo blanco
   },
 });
 

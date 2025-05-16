@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#efe7ff',
   },
   scrollView: {
     flexGrow: 1,
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FBFBFB',
     padding: 20,
     borderRadius: 10,
     width: '100%',

@@ -133,7 +133,7 @@ if (Platform.OS === 'web') {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Citas Agendadas</Text>
+      <Text style={styles.title}>AGENDA DE CITAS</Text>
 
       <ScrollView>
   <View style={styles.table}>
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     container: {
       flex: 1,
       padding: 16,
-      backgroundColor: '#f8f8f8',
+      backgroundColor: '#E8F9FF',
     },
     title: {
       fontSize: 22,

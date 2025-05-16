@@ -241,7 +241,7 @@ export default function AppointmentScheduler() {
               textDayHeaderFontSize: 14,
               selectedDayBackgroundColor: '#000',
               selectedDayTextColor: '#fff',
-              calendarBackground: '#fff',
+              calendarBackground: '#F9F9F9',
             }}
           />
         </View>
@@ -292,7 +292,7 @@ export default function AppointmentScheduler() {
           closeOnHardwareBackPress={false}
           showConfirmButton={true}
           confirmText="OK"
-          confirmButtonColor="#000"
+          confirmButtonColor="#C490E4"
           onConfirmPressed={() => setShowAlert(false)}
         />
       </View>
