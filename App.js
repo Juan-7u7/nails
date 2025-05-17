@@ -22,6 +22,7 @@ import { supabase } from './supabaseclient'; // Ajusta la ruta si es necesario
 // import { supabase } from '../nails/supabaseclient';
 import { Alert } from 'react-native';
 import CitasPreviewScreen from './paginas/administrador/CitasPreviewScreen';
+import PhotoCarousel from './componentes/carrusel';
 
 
 
@@ -192,6 +193,9 @@ function HomeScreen({ navigation }) {
             <Text style={styles.cardTitle}>BIENVENIDA</Text>
             <Text style={styles.cardText}>Siéntase cómoda de explorar cada uno de nuestros apartados y disfrutar de nuestros mejores servicios y atención.</Text>
           </View>
+<View style={{ backgroundColor: 'white', padding: 10, borderRadius: 10 }}>
+  <PhotoCarousel />
+</View>
 
           <View style={styles.transparentContainer}>
             <Text style={styles.transparentText}>Aquí encontraras nuestros principales canales para servicios o administración.

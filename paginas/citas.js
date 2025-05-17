@@ -13,6 +13,8 @@ import AwesomeAlert from 'react-native-awesome-alerts';
 import { Audio } from 'expo-av';
 import { styles } from '../estilos/citas_st';
 import { supabase } from '../supabaseclient';
+import { Alert } from 'react-native';
+
 
 // Componente reutilizable de input estilizado
 const StyledInput = ({ ...props }) => (
@@ -27,13 +29,12 @@ const StyledInput = ({ ...props }) => (
 // Generador optimizado de horarios
 const generateTimeSlots = () => {
   const slots = [];
-  for (let i = 8 * 60; i < 20 * 60; i += 30) {
-    const hour = Math.floor(i / 60);
-    const minute = i % 60;
-    slots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+  for (let hour = 8; hour <= 20; hour += 2) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
   }
   return slots;
 };
+
 
 export default function AppointmentScheduler() {
   const { width } = useWindowDimensions();
@@ -53,6 +54,8 @@ export default function AppointmentScheduler() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [isHomeAppointment, setIsHomeAppointment] = useState(false);
+  const [takenTimes, setTakenTimes] = useState([]);
+
 
   const timeSlots = generateTimeSlots();
 
@@ -96,75 +99,95 @@ export default function AppointmentScheduler() {
     }
 
     try {
-      const { data, error } = await supabase.from('citas').insert([
-        {
-          nombre: name,
-          correo: email,
-          fecha,
-          hora,
-          direccion: isHomeAppointment ? address : 'En estudio',
-          numero_celular: phone,
-        },
-      ]);
+  // 🔍 Verificar si ya existe una cita en esa fecha y hora
+  const { data: existing } = await supabase
+    .from('citas')
+    .select('id')
+    .eq('fecha', fecha)
+    .eq('hora', hora);
 
-      console.log('Resultado insert →', { data, error });
+  if (existing && existing.length > 0) {
+    Alert.alert(
+      'Hora no disponible',
+      'Ya hay una cita agendada a esa hora. Por favor elige otro horario.'
+    );
+    return; // 🛑 Cancelamos el insert
+  }
 
-      if (error) {
-        console.error('❌ Error al guardar la cita:', error.message);
-      } else {
-        console.log('✅ Cita registrada correctamente en Supabase.');
+  // ✅ Si no está ocupada, proceder con el insert
+  const { data, error } = await supabase.from('citas').insert([
+    {
+      nombre: name,
+      correo: email,
+      fecha,
+      hora,
+      direccion: isHomeAppointment
+        ? address
+        : 'Bulevar José María Morelos y Pavón, Privada San Miguel #6',
+      numero_celular: phone,
+    },
+  ]);
 
-        // 🔗 Enviar correo desde backend Flask
-        // 🔗 Enviar correo desde backend Flask
-        try {
-          const response = await fetch('https://nails-backend-gric.onrender.com/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name,
-              phone,
-              email,
-              date: selectedDate,
-              time: selectedTime,
-              address,
-              isHomeAppointment,
-            }),
-          });
+  console.log('Resultado insert →', { data, error });
 
-          const result = await response.json();
-          console.log('📬 Correo enviado desde Flask:', result);
+  if (error) {
+    console.error('❌ Error al guardar la cita:', error.message);
+    Alert.alert('Error', 'No se pudo registrar la cita. Inténtalo más tarde.');
+    return;
+  } else {
+    console.log('✅ Cita registrada correctamente en Supabase.');
 
-          // 🔗 Enviar también WhatsApp después del correo
-          const responseWhatsapp = await fetch('https://nails-backend-gric.onrender.com/send-whatsapp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name,
-              phone,
-              email,
-              date: selectedDate,
-              time: selectedTime,
-              address,
-              isHomeAppointment,
-            }),
-          });
+    try {
+      // 🔗 Enviar correo desde backend Flask
+      const response = await fetch('https://nails-backend-gric.onrender.com/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          date: selectedDate,
+          time: selectedTime,
+          address,
+          isHomeAppointment,
+        }),
+      });
 
-          const resultWhatsapp = await responseWhatsapp.json();
-          console.log('💬 WhatsApp enviado desde Flask:', resultWhatsapp);
+      const result = await response.json();
+      console.log('📬 Correo enviado desde Flask:', result);
 
-        } catch (flaskError) {
-          console.error('❌ Error al enviar correo o WhatsApp con Flask:', flaskError);
-        }
+      // 🔗 Enviar también WhatsApp después del correo
+      const responseWhatsapp = await fetch('https://nails-backend-gric.onrender.com/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          date: selectedDate,
+          time: selectedTime,
+          address,
+          isHomeAppointment,
+        }),
+      });
 
+      const resultWhatsapp = await responseWhatsapp.json();
+      console.log('💬 WhatsApp enviado desde Flask:', resultWhatsapp);
 
-        // Reiniciar formulario
-        setFormData({ name: '', phone: '', email: '', address: '' });
-        setSelectedTime(null);
-        setIsHomeAppointment(false);
-      }
-    } catch (err) {
-      console.error('❗ Error inesperado al guardar cita:', err.message);
+    } catch (flaskError) {
+      console.error('❌ Error al enviar correo o WhatsApp con Flask:', flaskError);
     }
+
+    // 🔄 Reiniciar formulario
+    setFormData({ name: '', phone: '', email: '', address: '' });
+    setSelectedTime(null);
+    setIsHomeAppointment(false);
+  }
+} catch (err) {
+  console.error('❗ Error inesperado al guardar cita:', err.message);
+  Alert.alert('Error', 'Ocurrió un problema inesperado. Intenta nuevamente.');
+}
+
   };
 
   return (
