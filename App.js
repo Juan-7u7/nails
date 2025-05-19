@@ -246,9 +246,18 @@ function HomeScreen({ navigation }) {
                   <Text style={styles.buttonText}>Volver a los Servicios</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.registerLinkContainer} onPress={() => setModalVisible(true)}>
-                  <Text style={styles.registerLinkText}>Regístrate aquí</Text>
-                </TouchableOpacity>
+                <TouchableOpacity
+  style={styles.registerLinkContainer}
+  onPress={() =>
+    Alert.alert(
+      'Registro no disponible',
+      'Por el momento no hay disponibilidad para nuevos registros. Inténtalo más tarde.'
+    )
+  }
+>
+  <Text style={styles.registerLinkText}>Regístrate aquí</Text>
+</TouchableOpacity>
+
               </KeyboardAvoidingView>
             )}
 

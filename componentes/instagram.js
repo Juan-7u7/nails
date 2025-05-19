@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/FontAwesome'; // Usando FontAwesome 
 
 const InstagramLink = () => {
   const handlePress = () => {
-    Linking.openURL('https://www.instagram.com/belengilcarrera/');
+    Linking.openURL('https://www.instagram.com/unas_creativas03');
   };
 
   return (

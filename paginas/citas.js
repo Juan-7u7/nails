@@ -7,6 +7,7 @@ import {
   ScrollView,
   Platform,
   useWindowDimensions,
+  StyleSheet
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import AwesomeAlert from 'react-native-awesome-alerts';
@@ -14,6 +15,9 @@ import { Audio } from 'expo-av';
 import { styles } from '../estilos/citas_st';
 import { supabase } from '../supabaseclient';
 import { Alert } from 'react-native';
+import GestionarCitaModal from '../paginas/rcitas';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 
 // Componente reutilizable de input estilizado
@@ -41,6 +45,7 @@ export default function AppointmentScheduler() {
 
   const isWeb = Platform.OS === 'web';
   const isMobileWeb = isWeb && width <= 500;
+const [modalVisible, setModalVisible] = useState(false);
 
   const [date] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(date.toISOString().split('T')[0]);
@@ -72,74 +77,58 @@ export default function AppointmentScheduler() {
     return name && phone && email && selectedTime && (!isHomeAppointment || address.trim() !== '');
   };
 
-  const handleConfirmAppointment = async () => {
-    const { name, phone, email, address } = formData;
+const handleConfirmAppointment = async () => {
+  const { name, phone, email, address } = formData;
 
-    if (!selectedDate || !selectedTime) {
-      console.error('❗ selectedDate o selectedTime no están definidos');
-      return;
-    }
-
-    const fecha = selectedDate;
-    const hora = `${selectedTime}:00`;
-
-    const message = `Nombre: ${name}\nTeléfono: ${phone}\nCorreo: ${email}\nFecha: ${fecha}\nHora: ${selectedTime}${isHomeAppointment ? `\nDirección: ${address}` : ''
-      }`;
-
-    setAlertMessage(message);
-    setShowAlert(true);
-
-    try {
-      const { sound } = await Audio.Sound.createAsync(
-        require('../sonidos/exito.mp3')
-      );
-      await sound.playAsync();
-    } catch (error) {
-      console.error('Error al reproducir el audio:', error);
-    }
-
-    try {
-  // 🔍 Verificar si ya existe una cita en esa fecha y hora
-  const { data: existing } = await supabase
-    .from('citas')
-    .select('id')
-    .eq('fecha', fecha)
-    .eq('hora', hora);
-
-  if (existing && existing.length > 0) {
-    Alert.alert(
-      'Hora no disponible',
-      'Ya hay una cita agendada a esa hora. Por favor elige otro horario.'
-    );
-    return; // 🛑 Cancelamos el insert
+  if (!selectedDate || !selectedTime) {
+    Alert.alert('Error', 'Debes seleccionar una fecha y una hora.');
+    return;
   }
 
-  // ✅ Si no está ocupada, proceder con el insert
-  const { data, error } = await supabase.from('citas').insert([
-    {
-      nombre: name,
-      correo: email,
-      fecha,
-      hora,
-      direccion: isHomeAppointment
-        ? address
-        : 'Bulevar José María Morelos y Pavón, Privada San Miguel #6',
-      numero_celular: phone,
-    },
-  ]);
+  const fecha = selectedDate;
+  const hora = `${selectedTime}:00`;
 
-  console.log('Resultado insert →', { data, error });
+  try {
+    const { sound } = await Audio.Sound.createAsync(
+      require('../sonidos/exito.mp3')
+    );
+    await sound.playAsync();
+  } catch (error) {
+    console.error('Error al reproducir el audio:', error);
+  }
 
-  if (error) {
-    console.error('❌ Error al guardar la cita:', error.message);
-    Alert.alert('Error', 'No se pudo registrar la cita. Inténtalo más tarde.');
-    return;
-  } else {
-    console.log('✅ Cita registrada correctamente en Supabase.');
+  try {
+    const idParaReagendar = await AsyncStorage.getItem('cita_id_para_reagendar');
 
-    try {
-      // 🔗 Enviar correo desde backend Flask
-      const response = await fetch('https://nails-backend-gric.onrender.com/send-email', {
+    if (idParaReagendar) {
+      // 🟡 Reagendar (UPDATE)
+      const { error } = await supabase
+        .from('citas')
+        .update({
+          nombre: name,
+          correo: email,
+          fecha,
+          hora,
+          direccion: isHomeAppointment
+            ? address
+            : 'Bulevar José María Morelos y Pavón, Privada San Miguel #6',
+          numero_celular: phone,
+        })
+        .eq('id', idParaReagendar);
+
+      if (error) {
+        Alert.alert('Error', 'No se pudo reagendar la cita.');
+        return;
+      }
+
+      setAlertMessage(
+        `✅ Tu cita ha sido modificada con éxito.\n\n` +
+        `ID de cita: ${idParaReagendar}\n` +
+        `Guarda este ID si necesitas hacer otro cambio.`
+      );
+      setShowAlert(true);
+
+      await fetch('https://nails-backend-gric.onrender.com/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -150,14 +139,12 @@ export default function AppointmentScheduler() {
           time: selectedTime,
           address,
           isHomeAppointment,
+          citaId: idParaReagendar,
+          fueReagendada: true,
         }),
       });
 
-      const result = await response.json();
-      console.log('📬 Correo enviado desde Flask:', result);
-
-      // 🔗 Enviar también WhatsApp después del correo
-      const responseWhatsapp = await fetch('https://nails-backend-gric.onrender.com/send-whatsapp', {
+      await fetch('https://nails-backend-gric.onrender.com/send-whatsapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -168,27 +155,103 @@ export default function AppointmentScheduler() {
           time: selectedTime,
           address,
           isHomeAppointment,
+          citaId: idParaReagendar,
+          fueReagendada: true,
         }),
       });
 
-      const resultWhatsapp = await responseWhatsapp.json();
-      console.log('💬 WhatsApp enviado desde Flask:', resultWhatsapp);
+      await AsyncStorage.removeItem('cita_id_para_reagendar');
 
-    } catch (flaskError) {
-      console.error('❌ Error al enviar correo o WhatsApp con Flask:', flaskError);
+    } else {
+      // 🔍 Verificar si ya existe una cita en esa fecha y hora
+      const { data: existing } = await supabase
+        .from('citas')
+        .select('id')
+        .eq('fecha', fecha)
+        .eq('hora', hora);
+
+      if (existing && existing.length > 0) {
+        Alert.alert('Hora no disponible', 'Ya hay una cita agendada a esa hora.');
+        return;
+      }
+
+      // ✅ Insertar nueva cita
+      const { data, error } = await supabase
+        .from('citas')
+        .insert([{
+          nombre: name,
+          correo: email,
+          fecha,
+          hora,
+          direccion: isHomeAppointment
+            ? address
+            : 'Bulevar José María Morelos y Pavón, Privada San Miguel #6',
+          numero_celular: phone,
+        }])
+        .select();
+
+      if (error) {
+        Alert.alert('Error', 'No se pudo registrar la cita.');
+        return;
+      }
+
+      const idCita = data?.[0]?.id;
+
+      const message = `✅ Tu cita ha sido registrada con éxito.\n\n` +
+        `Nombre: ${name}\n` +
+        `Teléfono: ${phone}\n` +
+        `Correo: ${email}\n` +
+        `Fecha: ${fecha}\n` +
+        `Hora: ${selectedTime}\n` +
+        `${isHomeAppointment ? `Dirección: ${address}\n` : ''}` +
+        `ID de cita: ${idCita}\n\n` +
+        `👉 Guarda este ID para cancelar o reagendar tu cita.`;
+
+      setAlertMessage(message);
+      setShowAlert(true);
+
+      await fetch('https://nails-backend-gric.onrender.com/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          date: selectedDate,
+          time: selectedTime,
+          address,
+          isHomeAppointment,
+          citaId: idCita,
+        }),
+      });
+
+      await fetch('https://nails-backend-gric.onrender.com/send-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          date: selectedDate,
+          time: selectedTime,
+          address,
+          isHomeAppointment,
+          citaId: idCita,
+        }),
+      });
     }
 
-    // 🔄 Reiniciar formulario
+    // 🔄 Reiniciar
     setFormData({ name: '', phone: '', email: '', address: '' });
     setSelectedTime(null);
     setIsHomeAppointment(false);
-  }
-} catch (err) {
-  console.error('❗ Error inesperado al guardar cita:', err.message);
-  Alert.alert('Error', 'Ocurrió un problema inesperado. Intenta nuevamente.');
-}
 
-  };
+  } catch (err) {
+    console.error('❗ Error inesperado al guardar cita:', err.message);
+    Alert.alert('Error', 'Ocurrió un problema inesperado. Intenta nuevamente.');
+  }
+};
+
 
   return (
     <ScrollView
@@ -305,6 +368,11 @@ export default function AppointmentScheduler() {
         >
           <Text style={styles.buttonText}>Confirmar Cita</Text>
         </Pressable>
+        <Pressable style={styles.button} onPress={() => setModalVisible(true)}>
+  <Text style={styles.buttonText}>Cancelar o Reagendar Cita</Text>
+</Pressable>
+
+
 
         <AwesomeAlert
           show={showAlert}
@@ -318,7 +386,13 @@ export default function AppointmentScheduler() {
           confirmButtonColor="#C490E4"
           onConfirmPressed={() => setShowAlert(false)}
         />
+        <GestionarCitaModal
+  visible={modalVisible}
+  onClose={() => setModalVisible(false)}
+/>
+
       </View>
+      
     </ScrollView>
   );
 }

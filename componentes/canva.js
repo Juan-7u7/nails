@@ -41,7 +41,7 @@ const CardWithVerticalContainers = () => {
         const response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium-diffusers', {
           method: 'POST',
           headers: {
-            'Authorization': 'Bearer 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',
+            'Authorization': 'Bearer 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',
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ inputs: enhancedPrompt }),

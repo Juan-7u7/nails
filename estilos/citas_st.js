@@ -79,9 +79,10 @@ export const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#000',
-    padding: 15,
+    padding: 12,
     borderRadius: 4,
     alignItems: 'center',
+    marginTop: 8,
   },
   buttonDisabled: {
     backgroundColor: '#988dae',

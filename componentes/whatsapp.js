@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/FontAwesome'; // Usando FontAwesome 
 const WhatsAppLink = () => {
   const handlePress = () => {
     // Redirige al número de WhatsApp (agregamos el código de país +52 para México)
-    const phoneNumber = '2381981575';
+    const phoneNumber = '2381694111';
     const url = `https://wa.me/52${phoneNumber}`;
     Linking.openURL(url);
   };
